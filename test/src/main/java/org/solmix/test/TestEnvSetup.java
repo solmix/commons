@@ -108,8 +108,10 @@ public class TestEnvSetup {
         if (test.exists()) {
             logbackXml = test.toURI().toURL();
         } else {
-            URL testURL = getClass().getResource("logback-test-default.xml");
-
+            URL testURL = getClass().getResource("/logback-test.xml");
+            if (testURL == null) {
+            	testURL = getClass().getResource("logback-test-default.xml");
+            }
             if (testURL == null) {
                 throw new IllegalArgumentException("missing logback-test-default.xml");
             }

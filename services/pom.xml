@@ -18,6 +18,8 @@
   	<module>freemarker</module>
   	<module>jsp</module>
   	<module>mail</module>
+  	<module>versioncontrol</module>
+  	<module>watcher</module>
   </modules>
   <name>Solmix :: Services :: Parent</name>
 </project>

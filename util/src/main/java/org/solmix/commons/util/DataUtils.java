@@ -1766,7 +1766,10 @@ public final class DataUtils {
 	public static boolean isNotNullAndEmpty(Collection<?> list) {
 		return list != null && list.size() > 0;
 	}
-
+	@Deprecated
+	public static boolean isNotNullAndEmpty(List<String> list) {
+		return list != null && list.size() > 0;
+	}
 	/**
 	 * @param <T>
 	 * @param filterProperties

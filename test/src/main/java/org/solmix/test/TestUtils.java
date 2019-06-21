@@ -10,10 +10,9 @@ import org.junit.Assert;
 public class TestUtils {
 
 	private static TestEnvSetup env = new TestEnvSetup().init();
-	public static final File basedir = env.getBasedir();
-	public static final File srcdir = env.getSrcdir();
-	public static final File destdir = env.getDestdir();
-	public static final File javaHome = getJavaHome();
+	public static final File basedir() {return env.getBasedir();};
+	public static final File srcdir() { return env.getSrcdir();};
+	public static final File destdir() {return  env.getDestdir();};
 	public static void load(){
 	    //do nothing ,just load static method and vars;
 	}
