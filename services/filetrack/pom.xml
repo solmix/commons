@@ -1,30 +1,27 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.solmix.services</groupId>
-    <artifactId>solmix-service-parent</artifactId>
-    <version>0.7.2-SNAPSHOT</version>
-  </parent>
-  <artifactId>solmix-service-versioncontrol</artifactId>
-  
-  <dependencies>
-  <dependency>
-		  <groupId>org.eclipse.jgit</groupId>
-		  <artifactId>org.eclipse.jgit</artifactId>
-		  <version>5.4.0.201906121030-r</version>
-		</dependency>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.solmix.services</groupId>
+		<artifactId>solmix-service-parent</artifactId>
+		<version>0.7.2-SNAPSHOT</version>
+	</parent>
+	<artifactId>solmix-service-filetrack</artifactId>
+	<dependencies>
 		<dependency>
-			<groupId>org.solmix.common</groupId>
-			<artifactId>solmix-common-runtime</artifactId>
+			<groupId>org.solmix.services</groupId>
+			<artifactId>solmix-service-versioncontrol</artifactId>
+			<version>0.7.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.solmix.test</groupId>
 			<artifactId>solmix-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-  </dependencies>
-  <version>0.7.1</version>
-  <build>
+	</dependencies>
+	<version>0.7.1</version>
+	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.felix</groupId>
@@ -44,9 +41,9 @@
 		</plugins>
 	</build>
 	<properties>
-		<solmix.osgi.export.pkg>org.solmix.service.versioncontrol*</solmix.osgi.export.pkg>
+		<solmix.osgi.export.pkg>org.solmix.service.filetrack*</solmix.osgi.export.pkg>
 		<solmix.osgi.import.pkg>*</solmix.osgi.import.pkg>
 	</properties>
 	<packaging>bundle</packaging>
-	<name>Solmix :: Services :: Version Control</name>
+	<name>Solmix :: Services :: File Tracker</name>
 </project>

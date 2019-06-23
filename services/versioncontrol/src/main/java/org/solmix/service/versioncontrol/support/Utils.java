@@ -191,8 +191,8 @@ public class Utils {
 	public static String formatPath(final String path) {
 		final String replaceSlash = path.replace("\\", "/");
 		String formattedPath = replaceSlash.replace("//", "/");
-		if (formattedPath.startsWith("/"))
-			formattedPath = formattedPath.substring(1, formattedPath.length());
+//		if (formattedPath.startsWith("/"))
+//			formattedPath = formattedPath.substring(1, formattedPath.length());
 		// for windows, make sure disk name is lowercase
 		formattedPath = formatWinDrive(formattedPath);
 		return formattedPath;

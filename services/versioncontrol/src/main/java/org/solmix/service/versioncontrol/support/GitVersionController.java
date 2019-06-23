@@ -552,11 +552,10 @@ public class GitVersionController implements VersionController
 		if (filepaths != null && filepaths.size() > 0) {
 			Collection<String> paths = new ArrayList<String>();
 			for (final String filepath : filepaths) {
-				final String path = filepath == null ? null
-						: Utils.formatPath(filepath);
+				final String path = filepath == null ? null : Utils.formatPath(filepath);
 				if (path != null && path.length() > 0)
 					paths.add(path);
-			}
+			} 
 			if (paths.size() > 0)
 				pathFilter = PathFilterGroup.createFromStrings(paths);
 		}
@@ -811,10 +810,9 @@ public class GitVersionController implements VersionController
 
 		final RevWalk rw = new RevWalk(repository);
 		try {
-			final ObjectId objHead = repository.resolve(/*
-														 * revId != null ? revId
-														 * :
-														 */"HEAD");
+			final ObjectId objHead = repository.resolve(revId != null ? revId
+														 :
+														 "HEAD");
 			if (objHead == null) {
 				LOG.error("Repository missing or coruppeted - HEAD not found in "
 						+ gitDir);
