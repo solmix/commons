@@ -1,4 +1,4 @@
-package org.solmix.service.filetrack.event;
+package org.solmix.service.filetrack;
 
 public enum EventActionsEnum {
 	CREATE("create"),
@@ -7,7 +7,7 @@ public enum EventActionsEnum {
 	RENAME("rename"),
 	REGISTER("register"),
 	REGISTER_COMPLETE("register_complete"),
-	SKIPPED("dummy");
+	SKIPPED("skipped");
 	
 	private final String value;
 	

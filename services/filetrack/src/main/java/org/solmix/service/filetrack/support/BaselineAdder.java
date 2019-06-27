@@ -3,8 +3,11 @@ package org.solmix.service.filetrack.support;
 import java.io.File;
 
 import org.solmix.service.filetrack.Callable;
-import org.solmix.service.filetrack.event.EventActionsEnum;
+import org.solmix.service.filetrack.EventActionsEnum;
 
+/**
+ * 添加基线
+ */
 public class BaselineAdder implements Callable {
 	Watcher watcher;
 	boolean recursive;

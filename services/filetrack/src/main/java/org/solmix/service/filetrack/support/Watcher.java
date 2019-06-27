@@ -24,9 +24,9 @@ import java.util.concurrent.BlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.solmix.commons.exec.Os;
+import org.solmix.service.filetrack.ChangeEvent;
+import org.solmix.service.filetrack.EventActionsEnum;
 import org.solmix.service.filetrack.TrackedDirInfo;
-import org.solmix.service.filetrack.event.ChangeEvent;
-import org.solmix.service.filetrack.event.EventActionsEnum;
 import org.solmix.service.versioncontrol.support.Utils;
 
 public class Watcher implements Runnable {
@@ -277,8 +277,7 @@ public class Watcher implements Runnable {
 				}
 
 				// this is only for directories (checked in doLinuxDirAdd)
-				if ((EventActionsEnum.RENAME.equals(event) || EventActionsEnum.CREATE.equals(event))
-						&& info.isRecursive()) {
+				if ((EventActionsEnum.RENAME.equals(event) || EventActionsEnum.CREATE.equals(event)) && info.isRecursive()) {
 					if (doLinuxDirAdd(filter, fullPath)) {
 						// rename of folder is treated as add delete, even though it is identified as
 						// rename.
@@ -301,8 +300,7 @@ public class Watcher implements Runnable {
 					handleUnmonitoredRename.setPath(null);
 				} else
 					onEvent(event, filter, fullPath);
-
-				oldPath = null;
+					oldPath = null;
 			}
 			if (path != null) {
 				handleUnmonitoredRename.setPath(oldPath);
@@ -440,11 +438,13 @@ public class Watcher implements Runnable {
 
 		String path = filePath;
 		String oldPath = oldFilePath;
+		//已处理完成的
 		if (EventActionsEnum.REGISTER_COMPLETE.equals(eventAction)) {
 			path = null;
 		} else if (!passedFilter(path, eventAction, filter)) {
+			//处理没通过filter的
 			if (oldPath == null) {
-				log.info("path and target didn't pass filter " + path);
+				log.info("path and target didn't pass filter {}" , path);
 				eventAction = EventActionsEnum.SKIPPED;
 			} else if (!passedFilter(oldPath, EventActionsEnum.DELETE, filter)) {
 				log.info("source and target didn't pass filter " + path + " " + oldPath);

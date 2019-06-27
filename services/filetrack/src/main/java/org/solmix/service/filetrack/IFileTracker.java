@@ -22,5 +22,13 @@ public interface IFileTracker
 
 	void removeTrackedDirs(Collection<String> monitoredPaths);
 
+	/**
+	 * 添加跟踪目录
+	 * <li>目录为null或者空，目录不是绝对路径，目录不是以/或者～/开头，目录不是盘符(:)开头，则添加basePath
+	 * @param basePath
+	 * @param trackerInfos
+	 * @param listener
+	 * @return
+	 */
 	Collection<String> addTrackedDirs(String basePath, Collection<TrackerInfo> trackerInfos, ChangeListener listener);
 }

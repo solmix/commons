@@ -12,11 +12,13 @@ public class FileWalker {
 		if (files == null) return;
 		for (File f : files) {
 			boolean passFilter = callable.passFilter(f);
-			if (passFilter) callable.preOrder(f);
+			if (passFilter) 
+				callable.preOrder(f);
 			if (f.isDirectory() && callable.walkSubdirs(f)){
 				walkDfs(f, callable);
 			}
-			if (passFilter) callable.postOrder(f);
+			if (passFilter) 
+				callable.postOrder(f);
 		}
 	}
 }

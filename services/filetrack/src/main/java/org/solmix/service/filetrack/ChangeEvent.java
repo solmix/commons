@@ -1,4 +1,4 @@
-package org.solmix.service.filetrack.event;
+package org.solmix.service.filetrack;
 
 
 public class ChangeEvent

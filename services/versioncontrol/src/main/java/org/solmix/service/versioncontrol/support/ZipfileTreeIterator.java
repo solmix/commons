@@ -220,6 +220,7 @@ public class ZipfileTreeIterator extends ExtendedTreeIterator {
 			this.mode = FileMode.TREE;
 			this.lastModified = -1;
 			File f = new File(relPath);
+			//file name is:/xx/ ;end with space.
 			name = f.getName().length() == 0 ? Utils.getRoot(f.getPath()): f.getName();
 			this.length = f.length();
 			this.isBinary = false;

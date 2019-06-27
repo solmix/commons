@@ -11,15 +11,13 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.solmix.service.filetrack.event.ChangeEvent;
-import org.solmix.service.filetrack.event.EventActionsEnum;
 import org.solmix.service.filetrack.support.BaselineAdder;
 import org.solmix.service.filetrack.support.ChangeEventProcessor;
 import org.solmix.service.filetrack.support.FileWalker;
 import org.solmix.service.filetrack.support.Watcher;
 import org.solmix.service.versioncontrol.support.Utils;
 
-public class FileTracker implements IFileTracker {
+public class FileTracker implements IFileTracker,ChangeListener {
 	private static Logger LOG = LoggerFactory.getLogger(FileTracker.class);
 	private static FileTracker instance = new FileTracker();
 	private TrackerStatus status = TrackerStatus.STOPPED;
@@ -73,6 +71,7 @@ public class FileTracker implements IFileTracker {
 		for (TrackerInfo configDef : configDefDtos) {
 			String dirName = configDef.getPath();
 			dirName = replaceSysVariable(dirName);
+			//完整路径，处理相对路径和绝对路径
 			if (installPath != null)
 				dirName = getFullPath(installPath, dirName);
 			if (LOG.isDebugEnabled())
@@ -92,21 +91,21 @@ public class FileTracker implements IFileTracker {
 			ChangeListener listener) {
 
 		final Map<String, TrackedDirInfo> dirsMap = getMonitoredFolderMap(basePath, trackerInfos);
-
+		//新添加监控时，创建第一版基线
 		generateBaselineEvents(dirsMap);
 		if (listener != null) {
 			for (final String dir : dirsMap.keySet())
 				folderListenerMap.put(dir, listener);
 		}
+		//添加监控目录
 		watcher.addUpdateWatchedDirs(dirsMap);
 		return dirsMap.keySet();
 	}
 
 	private void generateBaselineEvents(Map<String, TrackedDirInfo> dirsMap) {
 		// Building version control baseline for watched files
-
 		for (String path : dirsMap.keySet()) {
-			LOG.info("generateBaselineEvents for " + path);
+			LOG.debug("generateBaselineEvents for {}", path);
 			TrackedDirInfo info = dirsMap.get(path);
 			BaselineAdder callable = new BaselineAdder(watcher, info.isRecursive(), info.getFilter());
 			FileWalker.walkDfs(new File(path), callable);
@@ -127,7 +126,7 @@ public class FileTracker implements IFileTracker {
 		synchronized (status) {
 			LOG.info("Entered FileMonitor.start()");
 			if (status == TrackerStatus.STOPPED) {
-				changeEventProcessor = new ChangeEventProcessor();
+				changeEventProcessor = new ChangeEventProcessor(this);
 				changeEventProcessor.setVersionContorlDir(this.appDataDir);
 				changeEventProcessor.setMaxDiffSize(this.maxDiffSize);
 				Thread rocessorThread = new Thread(changeEventProcessor, "File-Change-Listener");
@@ -186,14 +185,15 @@ public class FileTracker implements IFileTracker {
 		}
 
 	}
-
+	
+	@Override
 	public void onChange(ChangeEvent item) {
 		/* ignore registration events */
 		if (EventActionsEnum.REGISTER.equals(item.getType()))
 			return;
 
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- onChange event start");
+			LOG.debug("---FILE-TRACKER--- onChange event start");
 		/* mapped listeners listen on specific folders */
 		if (folderListenerMap.size() > 0) {
 			String evPath = EventActionsEnum.RENAME == item.getType() ? item.getOldFullPath() : item.getFullPath();
@@ -241,7 +241,7 @@ public class FileTracker implements IFileTracker {
 		}
 
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- onChange before fire");
+			LOG.debug("---FILE-TRACKER--- onChange before fire");
 
 		/* general liteners listen for all events */
 		if (listeners != null) {
@@ -249,7 +249,7 @@ public class FileTracker implements IFileTracker {
 				listener.onChange(item);
 		}
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- onChange event fired");
+			LOG.debug("---FILE-TRACKER--- onChange event fired");
 	}
 
 }

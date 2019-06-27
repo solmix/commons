@@ -25,10 +25,35 @@ public interface VersionController
      */
     String[] doRename(final String gitDir, final String oldPath, final String newPath, final String message);
     
+    /**
+     * 提交指定路径的文件到版本库中
+     * 
+     * @param gitDir 版本库根路径
+     * @param path 文件路径
+     * @param commitMessage 提交信息
+     * @return
+     */
     String addChange(final String gitDir, final String path, String commitMessage);
     
+    /**
+     * 提交指定路径的文件到版本库中
+     * @param gitDir
+     * @param path
+     * @param oldPath
+     * @param commitMessage
+     * @param performCommit 是否提交
+     * @return
+     */
     String addChange(final String gitDir, final String path, String oldPath, String commitMessage, boolean performCommit);
     
+    /**
+     * 提交指定路径的文件到版本库中
+     * @param gitDir
+     * @param paths
+     * @param commitMessage
+     * @param performCommit 是否提交
+     * @return
+     */
     String addChange(final String gitDir, final Collection<String> paths,    String commitMessage, boolean performCommit);
     
     String commit(final String gitDir, String commitMessage);
@@ -62,10 +87,31 @@ public interface VersionController
      */
     public boolean gitDirExists(String gitDirBase);
     
+    /**
+     * 指定版本id下的修改信息
+     * 
+     * @param revId
+     * @param gitDir
+     * @param filepaths
+     * @return
+     * @throws IOException
+     */
     public Collection<RevisionDifferItem> getChangeInfo(final String revId, final String gitDir,  final Collection<String> filepaths) throws IOException;
     
+    /**
+     * 获取某个目录下的版本控制状态
+     * 
+     * @param dirPath
+     * @param items
+     * @return
+     */
     public String getStatus(String dirPath, Collection<RevisionDifferItem> items);
     
+    /**
+     * 对于在jar压缩文件中文件的监控，压缩文件中的文件名不包括在其中的，不版本控制
+     * 
+     * @param filteredExt 默认："properties;config;cfg;class;mf;list;jar;xml"
+     */
     public void setExtMonitoredInArchive(String filteredExt);
 
 }

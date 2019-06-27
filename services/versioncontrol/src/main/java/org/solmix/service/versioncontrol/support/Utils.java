@@ -191,8 +191,8 @@ public class Utils {
 	public static String formatPath(final String path) {
 		final String replaceSlash = path.replace("\\", "/");
 		String formattedPath = replaceSlash.replace("//", "/");
-//		if (formattedPath.startsWith("/"))
-//			formattedPath = formattedPath.substring(1, formattedPath.length());
+		if (formattedPath.startsWith("/"))
+			formattedPath = formattedPath.substring(1, formattedPath.length());
 		// for windows, make sure disk name is lowercase
 		formattedPath = formatWinDrive(formattedPath);
 		return formattedPath;
@@ -220,8 +220,10 @@ public class Utils {
 
 	public static String getRoot(String path) {
 		File f = new File (path);
-		while (f.getParentFile() != null)
+//		if (f.getParentFile() != null) {
+		while (f.getParentFile() != null) {
 			f = f.getParentFile();
+		}
 		String s = f.getName();
 		String t = f.getPath();
 		if (s.length() == 0 && t.length() > 0){
@@ -231,7 +233,7 @@ public class Utils {
 			else 
 				s = t;
 		}
-		return s;
+		return t;
 	}
 	public static boolean isZipArchive(String filename) {
 		if ((new File(filename).isDirectory()))

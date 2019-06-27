@@ -12,9 +12,9 @@ import java.util.concurrent.BlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.solmix.service.filetrack.ChangeEvent;
 import org.solmix.service.filetrack.ChangeListener;
-import org.solmix.service.filetrack.event.ChangeEvent;
-import org.solmix.service.filetrack.event.EventActionsEnum;
+import org.solmix.service.filetrack.EventActionsEnum;
 import org.solmix.service.versioncontrol.ChangedType;
 import org.solmix.service.versioncontrol.RevisionDifferItem;
 import org.solmix.service.versioncontrol.VersionController;
@@ -34,16 +34,22 @@ public class ChangeEventProcessor implements Runnable {
     	messageQueue = new ArrayBlockingQueue<ChangeEvent>(1000, true);;
     }
     
-   
+    public ChangeEventProcessor(ChangeListener changeListener) {
+    	this();
+    	this.changeListener=changeListener;
+    }
     
-    public BlockingQueue<ChangeEvent> getMessageQueue() {
+    public void setChangeListener(ChangeListener changeListener) {
+		this.changeListener = changeListener;
+	}
+
+	public BlockingQueue<ChangeEvent> getMessageQueue() {
 		return messageQueue;
 	}
 
 
-
-	private void updateDeleteList(List<ChangeEvent> deleteList,
-			final ChangeEvent event) {
+    //删除处理，如果上级目录已经删除，子目录的删除操作移除
+	private void updateDeleteList(List<ChangeEvent> deleteList, final ChangeEvent event) {
 		boolean improves = false;
 		boolean represented = false;
 		
@@ -112,218 +118,217 @@ public class ChangeEventProcessor implements Runnable {
 	@Override
 	public void run() {
 		final boolean success = versionController.createRepository(versionContorlDir);
-	if (!success) {
-		LOG.error("Failure creating version control repository for git Dir: " + versionContorlDir);
-		return;
-	}
+		if (!success) {
+			LOG.error("Failure creating version control repository for git Dir: " + versionContorlDir);
+			return;
+		}
 	
-	EventActionsEnum action = null;
-	String path = null;
-	List<ChangeEvent> deleteList = new LinkedList<ChangeEvent>();
-	ChangeEvent lastCreateDirEvent = null;
-	LOG.info("ChangeEventProcessor started");
-	Collection<String> registerFiles = new LinkedList<String>();
-	Collection<String> batchCreateFiles = new LinkedList<String>();
-	long lastDummyTime = 0L;
+		EventActionsEnum action = null;
+		String path = null;
+		List<ChangeEvent> deleteList = new LinkedList<ChangeEvent>();
+		ChangeEvent lastCreateDirEvent = null;
+		LOG.info("ChangeEventProcessor started");
+		Collection<String> registerFiles = new LinkedList<String>();
+		Collection<String> batchCreateFiles = new LinkedList<String>();
+		long lastDummyTime = 0L;
 	
-	while (!stop){
-		try {
-			final ChangeEvent event = messageQueue.take();
-			action = event.getType();
-			if (LOG.isDebugEnabled())
-				LOG.debug("Event taken "+action.protocolValue()+ " " + event.getFullPath());
-			
-			if (EventActionsEnum.SKIPPED.equals(action))
-				continue;
+		while (!stop){
+			try {
+				//出队列
+				final ChangeEvent event = messageQueue.take();
+				action = event.getType();
+				if (LOG.isDebugEnabled())
+					LOG.debug("Event taken "+action.protocolValue()+ " " + event.getFullPath());
 				
-			if (EventActionsEnum.REGISTER_COMPLETE.equals(action)){
-				LOG.info("Register complete!");
-				continue;
-			}
-			
-			File f = event.getFullPath() == null ? null : new File(event.getFullPath());
-			String ePath = event.getFullPath();
-			
-			ChangeEvent nextEvent = messageQueue.peek();
-			if (nextEvent == null) {
-				if (action == EventActionsEnum.DELETE) Thread.sleep(500);
-				else if (action == EventActionsEnum.MODIFY) Thread.sleep(200);
-				else if (action == EventActionsEnum.CREATE || action == EventActionsEnum.REGISTER) Thread.sleep(100); 
-				nextEvent = messageQueue.peek();
-			}
-			
-			
-			if (nextEvent != null && EventActionsEnum.SKIPPED.equals(nextEvent.getType())){
-				lastDummyTime = nextEvent.getTimestamp();
-				nextEvent.setFullPath(event.getFullPath());
-				nextEvent.setTimestamp(event.getTimestamp());
-				nextEvent.setType(event.getType());
-				nextEvent.setOldFullPath(event.getOldFullPath());
-				continue;
-			}
-
-			if (LOG.isDebugEnabled())
-				LOG.debug("Next evet: "+(nextEvent == null ? null : nextEvent.getType()));
-
-			if (EventActionsEnum.REGISTER.equals(action)){
-				boolean commit = nextEvent == null 
-					|| !EventActionsEnum.REGISTER.equals(nextEvent.getType())
-					/*|| ArchiveUtils.isZipArchive(nextEvent.getFullPath())
-					|| ArchiveUtils.isZipArchive(ePath)*/;
-				registerFiles.add(event.getFullPath());
-				if (commit && registerFiles.size() > 0){
-//					if (msg == null)
-//						msg = "dummy message";
-					String msg = addFileBatch(registerFiles, EventActionsEnum.REGISTER);
-					if (msg != null){
-						String revId = versionController.commit(getVersionControlDir(), msg);
-						LOG.info("Commited register, id: "+revId);
+				if (EventActionsEnum.SKIPPED.equals(action))
+					continue;
+					
+				if (EventActionsEnum.REGISTER_COMPLETE.equals(action)){
+					LOG.info("Register complete!");
+					continue;
+				}
+				
+				File f = event.getFullPath() == null ? null : new File(event.getFullPath());
+				String ePath = event.getFullPath();
+				
+				//队列为空时，等待一段时间再执行循环
+				ChangeEvent nextEvent = messageQueue.peek();
+				if (nextEvent == null) {
+					if (action == EventActionsEnum.DELETE) Thread.sleep(500);
+					else if (action == EventActionsEnum.MODIFY) Thread.sleep(200);
+					else if (action == EventActionsEnum.CREATE || action == EventActionsEnum.REGISTER) Thread.sleep(100); 
+					nextEvent = messageQueue.peek();
+				}
+				
+				
+				if (nextEvent != null && EventActionsEnum.SKIPPED.equals(nextEvent.getType())){
+					lastDummyTime = nextEvent.getTimestamp();
+					nextEvent.setFullPath(event.getFullPath());
+					nextEvent.setTimestamp(event.getTimestamp());
+					nextEvent.setType(event.getType());
+					nextEvent.setOldFullPath(event.getOldFullPath());
+					continue;
+				}
+	
+				if (LOG.isDebugEnabled())
+					LOG.debug("Next evet: "+(nextEvent == null ? null : nextEvent.getType()));
+	
+				if (EventActionsEnum.REGISTER.equals(action)){
+					//连续注册完毕后commit
+					boolean commit = nextEvent == null  || !EventActionsEnum.REGISTER.equals(nextEvent.getType());
+					registerFiles.add(event.getFullPath());
+					if (commit && registerFiles.size() > 0){
+						
+						String msg = addFileBatch(registerFiles, EventActionsEnum.REGISTER);
+						if (msg != null){
+							String revId = versionController.commit(getVersionControlDir(), msg);
+							LOG.info("Commited register, id: "+revId);
+						}
+						//processCommit(registerFiles, msg);
+						registerFiles.clear();
 					}
-					//processCommit(registerFiles, msg);
-					registerFiles.clear();
+					lastDummyTime = 0L;
+					//连续添加，作为一次来提交
+					continue;
 				}
-				lastDummyTime = 0L;
-				continue;
-			}
-			
-			if (EventActionsEnum.RENAME.equals(action) && event.getOldFullPath() == null){
-				action = EventActionsEnum.CREATE;
-				event.setType(EventActionsEnum.CREATE);
-			}
-			
-			if (nextEvent == null
-				|| ((nextEvent.getTimestamp() - event.getTimestamp() > 500) && nextEvent.getTimestamp() - lastDummyTime > 500)) {
-				// Linux solution - set of delete events
-				lastDummyTime = 0L;
-				if (EventActionsEnum.DELETE.equals(action))
-					updateDeleteList(deleteList, event);
-				fireFolderDelete(deleteList);
 				
-				// fire create event for directory if any has bee saved:
-				if (lastCreateDirEvent != null){
-					if (action.equals(EventActionsEnum.CREATE) 
-							&& contained(ePath, lastCreateDirEvent.getFullPath())){
-						addToDirCopy(event, batchCreateFiles);
+				if (EventActionsEnum.RENAME.equals(action) && event.getOldFullPath() == null){
+					action = EventActionsEnum.CREATE;
+					event.setType(EventActionsEnum.CREATE);
+				}
+				
+				if (nextEvent == null || ((nextEvent.getTimestamp() - event.getTimestamp() > 500) && nextEvent.getTimestamp() - lastDummyTime > 500)) {
+					// Linux solution - set of delete events
+					lastDummyTime = 0L;
+					if (EventActionsEnum.DELETE.equals(action)) {
+						updateDeleteList(deleteList, event);
 					}
-					if (batchCreateFiles.size() > 0)
-						fireNClearCreateDirEvent(lastCreateDirEvent, batchCreateFiles);
-					lastCreateDirEvent = null;
-					continue;
-				} 
-				// if it's a directory, we don't want to proecess directory events independantly
-				if (f.isDirectory()){
-					if (LOG.isDebugEnabled())
-						LOG.debug("Directory event discarded");
-					continue;
-				}
-				
-				// if it's delete, current event was already added to the rootSet, and then processed.
-				if (!action.equals(EventActionsEnum.DELETE) )
-					processEvent(event);
-
-				continue;
-			}
-			if (EventActionsEnum.MODIFY.equals(action)
-				&& event.equals(nextEvent)) {
-				LOG.debug("Duplicate MODIFY events detected, skipping");
-				continue;
-			}
-			if (EventActionsEnum.DELETE.equals(action)) {
-				if (EventActionsEnum.CREATE.equals(nextEvent.getType())
-					&& event.getFullPath().equals(nextEvent.getFullPath())) {
-					// Win XP and Linux generate a DELETE-CREATE sequence for the MOVE operation. 
-					// If the next event is CREATE and it's on the same file, replace both with a 
-					// MODIFY event
-					nextEvent.setType(EventActionsEnum.MODIFY);
-					if (LOG.isDebugEnabled())
-						LOG.debug("overwrite sequence detected (DELETE+CREATE), replacing with MODIFY");
-					continue; // drop delete-create and leave a modify (for overwrite sequences)
-				}
-				if (EventActionsEnum.DELETE.equals(nextEvent.getType())) {
-					updateDeleteList(deleteList, event);
-					continue;
-				}
-				updateDeleteList(deleteList, event);
-			}
-
-			if (EventActionsEnum.CREATE.equals(action) || EventActionsEnum.MODIFY.equals(action)) {
-				if (EventActionsEnum.MODIFY.equals(nextEvent.getType())
-					&& event.getFullPath().equals(nextEvent.getFullPath())) {
-					if (LOG.isDebugEnabled())
-						LOG.debug("Dropping modify from create/modify sequence.");
-					nextEvent.setType(EventActionsEnum.CREATE);
-					continue; // make create/modify into single create
-				}
-				if (EventActionsEnum.CREATE.equals(nextEvent.getType()) || EventActionsEnum.MODIFY.equals(nextEvent.getType())) {
+					fireFolderDelete(deleteList);
+					
+					// fire create event for directory if any has bee saved:
+					if (lastCreateDirEvent != null){
+						if (action.equals(EventActionsEnum.CREATE)  && contained(ePath, lastCreateDirEvent.getFullPath())){
+							addToDirCopy(event, batchCreateFiles);
+						}
+						if (batchCreateFiles.size() > 0)
+							fireNClearCreateDirEvent(lastCreateDirEvent, batchCreateFiles);
+						lastCreateDirEvent = null;
+						continue;
+					} 
+					// 如果只是目录不处理
 					if (f.isDirectory()){
-						if (lastCreateDirEvent != null){
-							if (contained(ePath, lastCreateDirEvent.getFullPath())){
-								fireFolderDelete(deleteList);
+						if (LOG.isDebugEnabled())
+							LOG.debug("Directory event discarded");
+						continue;
+					}
+					
+					// if it's delete, current event was already added to the rootSet, and then processed.
+					if (!action.equals(EventActionsEnum.DELETE) )
+						processEvent(event);
+	
+					continue;
+				}
+				if (EventActionsEnum.MODIFY.equals(action)
+					&& event.equals(nextEvent)) {
+					LOG.debug("Duplicate MODIFY events detected, skipping");
+					continue;
+				}
+				if (EventActionsEnum.DELETE.equals(action)) {
+					if (EventActionsEnum.CREATE.equals(nextEvent.getType())
+						&& event.getFullPath().equals(nextEvent.getFullPath())) {
+						// 删除后紧跟一个创建，而且名称相同，那么就是修改
+						nextEvent.setType(EventActionsEnum.MODIFY);
+						if (LOG.isDebugEnabled())
+							LOG.debug("overwrite sequence detected (DELETE+CREATE), replacing with MODIFY");
+						continue; 
+					}
+					//连续删除
+					if (EventActionsEnum.DELETE.equals(nextEvent.getType())) {
+						updateDeleteList(deleteList, event);
+						continue;
+					}
+					updateDeleteList(deleteList, event);
+				}
+	
+				if (EventActionsEnum.CREATE.equals(action) || EventActionsEnum.MODIFY.equals(action)) {
+					if (EventActionsEnum.MODIFY.equals(nextEvent.getType())
+						&& event.getFullPath().equals(nextEvent.getFullPath())) {
+						if (LOG.isDebugEnabled())
+							LOG.debug("Dropping modify from create/modify sequence.");
+						nextEvent.setType(EventActionsEnum.CREATE);
+						//连续的修改，直接取下一次
+						continue; 
+					}
+					if (EventActionsEnum.CREATE.equals(nextEvent.getType()) || EventActionsEnum.MODIFY.equals(nextEvent.getType())) {
+						if (f.isDirectory()){
+							if (lastCreateDirEvent != null){
+								if (contained(ePath, lastCreateDirEvent.getFullPath())){
+									fireFolderDelete(deleteList);
+									continue;
+								} else {
+									if (batchCreateFiles.size() > 0)
+										fireNClearCreateDirEvent(lastCreateDirEvent, batchCreateFiles);
+								}
+							}							
+							lastCreateDirEvent = event;
+							if (LOG.isDebugEnabled())
+								LOG.debug("Directory saved for recursive copy: "+event.getFullPath());
+							fireFolderDelete(deleteList);
+							continue;
+						} else {
+							if (lastCreateDirEvent != null && contained(ePath, lastCreateDirEvent.getFullPath())){
+								addToDirCopy(event, batchCreateFiles);
 								continue;
-							} else {
+							} else{
+								if (EventActionsEnum.MODIFY.equals(action)){
+									String commonPath = getCommonPath(ePath, nextEvent.getFullPath());
+									if (commonPath != null){
+										lastCreateDirEvent = new ChangeEvent(EventActionsEnum.MODIFY, commonPath, lastCreateDirEvent == null ? event.getTimestamp() : lastCreateDirEvent.getTimestamp());
+										addToDirCopy(event, batchCreateFiles);
+										fireFolderDelete(deleteList);
+										if (LOG.isDebugEnabled())
+											LOG.debug("Generating common modify directory: "+commonPath);
+										continue;
+									}
+										
+								}
+								
 								if (batchCreateFiles.size() > 0)
 									fireNClearCreateDirEvent(lastCreateDirEvent, batchCreateFiles);
+								lastCreateDirEvent = null;
 							}
-						}							
-						lastCreateDirEvent = event;
-						if (LOG.isDebugEnabled())
-							LOG.debug("Directory saved for recursive copy: "+event.getFullPath());
-						fireFolderDelete(deleteList);
-						continue;
-					} else {
-						if (lastCreateDirEvent != null && contained(ePath, lastCreateDirEvent.getFullPath())){
-							addToDirCopy(event, batchCreateFiles);
-							continue;
-						} else{
-							if (EventActionsEnum.MODIFY.equals(action)){
-								String commonPath = getCommonPath(ePath, nextEvent.getFullPath());
-								if (commonPath != null){
-									lastCreateDirEvent = new ChangeEvent(EventActionsEnum.MODIFY, commonPath, lastCreateDirEvent == null ? event.getTimestamp() : lastCreateDirEvent.getTimestamp());
-									addToDirCopy(event, batchCreateFiles);
-									fireFolderDelete(deleteList);
-									if (LOG.isDebugEnabled())
-										LOG.debug("Generating common modify directory: "+commonPath);
-									continue;
-								}
-									
-							}
-							
-							if (batchCreateFiles.size() > 0)
-								fireNClearCreateDirEvent(lastCreateDirEvent, batchCreateFiles);
-							lastCreateDirEvent = null;
 						}
+					} else  if (lastCreateDirEvent != null){
+						// fire create event for directory if any has bee saved:
+						if (batchCreateFiles.size() > 0)
+							fireNClearCreateDirEvent(lastCreateDirEvent, batchCreateFiles);
+						lastCreateDirEvent = null;
 					}
-				} else  if (lastCreateDirEvent != null){
-					// fire create event for directory if any has bee saved:
-					if (batchCreateFiles.size() > 0)
-						fireNClearCreateDirEvent(lastCreateDirEvent, batchCreateFiles);
-					lastCreateDirEvent = null;
 				}
+				//处理删除列表
+				fireFolderDelete(deleteList);
+				
+				//上一步已经处理了
+				if (!action.equals(EventActionsEnum.DELETE))
+					processEvent(event);
+	
+			} catch (InterruptedException ex) {
+				if (!stop)
+					LOG.error(ex.getMessage(), ex);
+				break;
+			} catch (Exception e){
+				LOG.error(e.getMessage(), e);
+	
 			}
-
-			fireFolderDelete(deleteList);
-			
-			// if it's delete, current event was already added to the rootSet, and then processed.
-			if (!action.equals(EventActionsEnum.DELETE))
-				processEvent(event);
-
-		} catch (InterruptedException ex) {
-			if (!stop)
-				LOG.error(ex.getMessage(), ex);
-			break;
-		} catch (Exception e){
-			LOG.error(e.getMessage(), e);
-
 		}
+		LOG.info("ChangeEventProcessor stopped. Last Event: "+action+" "+path+ ". Stop flag:"+stop);
 	}
-	LOG.info("ChangeEventProcessor stopped. Last Event: "+action+" "+path+ ". Stop flag:"+stop);
-}
+	
 	private String addFileBatch(Collection<String> paths, EventActionsEnum action){
 		LOG.info("addFiles: - multiple file " + action.protocolValue());
 		final String message = String.valueOf(System.currentTimeMillis());
 		final String gitDir = getVersionControlDir();
 		String res = versionController.addChange(gitDir, paths, message, false);
-		
 		return res;
 	}
 	
@@ -411,7 +416,7 @@ public class ChangeEventProcessor implements Runnable {
 			final Collection<RevisionDifferItem> items) {
 		String diff;
 //		if (LOG.isDebugEnabled())
-//			LOG.debug("---BENCHMARK--- getDiff start");
+//			LOG.debug("---FILE-TRACKER--- getDiff start");
 		File f = new File(path);
 		boolean folder = (f!=null && f.isDirectory());
 		
@@ -445,7 +450,7 @@ public class ChangeEventProcessor implements Runnable {
 			diff += " (Diff truncated due to length...)";
 		}
 //		if (LOG.isDebugEnabled())
-//			LOG.debug("---BENCHMARK--- getDiff end");
+//			LOG.debug("---FILE-TRACKER--- getDiff end");
 
 		return diff;
 	}

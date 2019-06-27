@@ -19,7 +19,7 @@
   	<module>jsp</module>
   	<module>mail</module>
   	<module>versioncontrol</module>
-  	<module>watcher</module>
+  	<module>filetrack</module>
   </modules>
   <name>Solmix :: Services :: Parent</name>
 </project>

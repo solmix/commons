@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,15 @@ public class GitVersionController implements VersionController
 	private final Map<String, Repository> repositoryMap = new HashMap<String, Repository>();
 	private final Map<String, PairLong> fileInfoMap = new TreeMap<String,PairLong>();
 	private String extMonitoredInArchive;
+	
+	private static final String DEFAULT_EXT_SET="ajmap,bmp,class,dll,exe,gif,ico,jpeg,jpg,pdf,png,ppt,so,tif,tiff,zip";
+	private static final String DEFAULT_EXT_MONI_IN_ARCH="properties;config;cfg;class;mf;list;jar;xml";
+	public GitVersionController() {
+		final String[] extArray = DEFAULT_EXT_SET.split(",");
+		final List<String> extList = extArray == null || extArray.length == 0 ? null : Arrays.asList(extArray);
+		binaryExtSet = extList == null ? null : new HashSet<String>(extList);
+		setExtMonitoredInArchive(DEFAULT_EXT_MONI_IN_ARCH);
+	}
 	
     private String getGitDir(final String gitDirBase) {
 		return gitDirBase + File.separator + GIT_DIR;
@@ -264,19 +274,19 @@ public class GitVersionController implements VersionController
 			final Repository repository, final TreeFilter pathFilter,
 			final boolean changesOnly) throws IOException {
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- FileDiff[] getChangeInfo start");
+			LOG.debug("---VERSION-CONTROL--- FileDiff[] getChangeInfo start");
 		TreeWalk tw = new TreeWalk(repository);
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- FileDiff[] getChangeInfo after treewalk create");
+			LOG.debug("---VERSION-CONTROL--- FileDiff[] getChangeInfo after treewalk create");
 		if (pathFilter != null)
 			tw.setFilter(AndTreeFilter.create(pathFilter, TreeFilter.ANY_DIFF));
 		else
 			tw.setFilter(TreeFilter.ANY_DIFF);
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- getChangeInfo before compute");
+			LOG.debug("---VERSION-CONTROL--- getChangeInfo before compute");
 		FileDiffer[] diffs = FileDiffer.compute(tw, c, null, true);
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- getChangeInfo after compute");
+			LOG.debug("---VERSION-CONTROL--- getChangeInfo after compute");
 		if ((diffs == null || diffs.length <= 0) && changesOnly) {
 			return null;
 		}
@@ -297,28 +307,25 @@ public class GitVersionController implements VersionController
 
     @Override
     public String addChange(String gitDir, String path, String oldPath, String commitMessage, boolean performCommit) {
-    	if (!addToMap(path) && oldPath == null)
-			return null;
-			
+		path = getFullPath(gitDir, path);
+		if(oldPath!=null) {
+			oldPath = getFullPath(gitDir, oldPath);
+		}
+    	if (!addToMap(path) && oldPath == null) {
+    		return null;
+    	}
 		File file = new File(path);
 		
 		boolean retVal = false;
-		final String comment = commitMessage + ";" + file.lastModified() + ";"
-				+ file.length()+ ";"+ file.getName();
-		if (/*file.isDirectory() ||*/ !file.exists()) {
-//			return commitDeleteFile(gitDir, path, comment);
+		final String comment = commitMessage + ";" + file.lastModified() + ";" + file.length()+ ";"+ file.getName();
+		
+		if (!file.exists()) {
 			retVal = commitChangeFile(gitDir, Arrays.asList(path), true);
 			deleteFromInfoMap(path);
-		}
-		
-		// handle rename
-		else if (oldPath != null){
+		}else if (oldPath != null){
 			retVal = commitRenameFile(gitDir, path, oldPath, comment) != null;
 			deleteFromInfoMap(oldPath);
-		}
-		
-		// 
-		else 
+		}else 
 			retVal = commitChangeFile(gitDir,  Arrays.asList(path), false);
 		
 		if (retVal && performCommit)
@@ -327,21 +334,45 @@ public class GitVersionController implements VersionController
 		return retVal ?  comment : null;
     }
     
-    private boolean commitChangeFile(final String gitDir, final Collection<String> paths,
-			boolean setUpdateFlag) {
+    @Override
+    public String addChange(String gitDir, Collection<String> paths, String commitMessage, boolean performCommit) {
+    	boolean retVal = false;
+		final Collection<String> changedFiles = new ArrayList<String>();
+		
+		for (String path: paths) {
+			path = getFullPath(gitDir, path);
+			retVal = addToMap(path) ;
+			if (retVal)
+				changedFiles.add(path);
+		}
+		if (changedFiles.size() <= 0)
+			return null;
+		
+		retVal = commitChangeFile(gitDir, changedFiles, false);
+			
+		if (retVal && performCommit)
+			return commit(gitDir, "multiple files changed.");
+			
+		return retVal == false? null : String.valueOf(retVal);
+    }
+    
+	private String getFullPath(final String installDir, final String relPath) {
+		if (relPath == null || relPath.length() <= 0)
+			return installDir;
+		File f = new File(relPath);
+		final boolean isAbsolute = f.isAbsolute() || relPath.charAt(1) == ':' || relPath.charAt(0) == '/'
+				|| relPath.startsWith("~/");
+		final String basePath = isAbsolute ? "" : installDir + File.separator;
+		return basePath + relPath;
+	}
+    
+    private boolean commitChangeFile(final String gitDir, final Collection<String> paths, boolean setUpdateFlag) {
 		final Repository repository = openRepository(gitDir);
 
 		AddCommand addFile = null;
 		String currRoot = null;
 		
 		AddCommand add = null;
-		
-		/**
-		 * VERY IMPORTANT!!!!!!!!
-		 * int the following loop the addCommand objects are called and then released before 
-		 * the next object is created. If not, a potential out of memory can occur if many
-		 * addCommand objects are held in memory simultaniosly!!!
-		 */
 		
 		for (String path: paths){
 			final String formattedPath = Utils.formatPath(path);
@@ -354,15 +385,23 @@ public class GitVersionController implements VersionController
 			}
 			
 			if (Utils.isZipArchive(formattedPath)) {
-				if (add!= null  && add instanceof AddAllCommand)
+				//zip每次出现都调用
+				if (add != null && add instanceof AddAllCommand) {
 					callAdd(add);
+				}
 				final ZipfileTreeIterator zipTreeIterator = new ZipfileTreeIterator(repository, zipPath);
 				zipTreeIterator.setIncludedExtensions(getExtMonitoredInArchive());
 				add = initAddcommand(new AddAllCommand(repository), zipTreeIterator);
 			} else {
-				if (add != null && add instanceof AddAllCommand)
+				if (add != null && add instanceof AddAllCommand) {
 					callAdd(add);
+				}
+				//同一目录处理一次
 				if (addFile == null || !root.equals(currRoot)){
+					//目录已经变化，保存上次
+					if(add!=null) {
+						callAdd(add);
+					}
 					addFile = initAddcommand(new AddCommand(repository), new ExtendedTreeIterator(repository, root));
 					currRoot = root;
 				}
@@ -371,15 +410,20 @@ public class GitVersionController implements VersionController
 			add.addFilepattern(formattedPath);
 			add.setUpdate(setUpdateFlag);
 		}
-		
-		if (add != null  && add != addFile)
+		//当出现zip时，add和addFile不等
+		if (add != null  && add != addFile) {
 			callAdd(add);
-		if (addFile != null)
+		}
+		
+		if (addFile != null) {
 			callAdd(addFile);
+		}
 
 		return true;
 
 	}
+    
+    
     public String getExtMonitoredInArchive() {
 		return extMonitoredInArchive;
 	}
@@ -387,8 +431,8 @@ public class GitVersionController implements VersionController
 	public void setExtMonitoredInArchive(String extMonitoredInArchive) {
 		this.extMonitoredInArchive = extMonitoredInArchive;
 	}
-	private AddCommand initAddcommand(AddCommand addCommand,
-			ExtendedTreeIterator fileTreeIterator) {
+	//
+	private AddCommand initAddcommand(AddCommand addCommand, 	ExtendedTreeIterator fileTreeIterator) {
 		fileTreeIterator.setExtensionsForMd5(binaryExtSet);
 		addCommand.setWorkingTreeIterator(fileTreeIterator);
 		return addCommand;
@@ -423,7 +467,11 @@ public class GitVersionController implements VersionController
 
 		return res;
 	}
-    
+    /**
+     * 缓存文件的最后修改时间和文件长度
+     * @param path
+     * @return
+     */
     private boolean addToMap(String path){
 		File file = new File(path);
 		long lastModified = file.lastModified();
@@ -456,37 +504,19 @@ public class GitVersionController implements VersionController
 			fileInfoMap.remove(s);
 	}
     
-    @Override
-    public String addChange(String gitDir, Collection<String> paths, String commitMessage, boolean performCommit) {
-    	boolean retVal = false;
-		final Collection<String> changedFiles = new ArrayList<String>();
-		for (String path: paths) {
-			retVal = addToMap(path) ;
-			if (retVal)
-				changedFiles.add(path);
-		}
-		if (changedFiles.size() <= 0)
-			return null;
-		
-		retVal = commitChangeFile(gitDir, changedFiles, false);
-			
-		if (retVal && performCommit)
-			return commit(gitDir, "multiple files changed.");
-			
-		return retVal == false? null : String.valueOf(retVal);
-    }
+   
 
     @Override
     public String commit(String gitDir, String commitMessage) {
     	if (LOG.isDebugEnabled())
-    		LOG.debug("---BENCHMARK--- commit start");
+    		LOG.debug("---VERSION-CONTROL--- commit start");
 		final Repository repository = openRepository(gitDir);
 		String id = null;
 		final RevCommit rc = doCommit(repository, commitMessage);
 		id = rc == null ? null : ObjectId.toString(rc.getId());
 		closeRepositoryTransaction(repository);
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- commit end");
+			LOG.debug("---VERSION-CONTROL--- commit end");
 		return id;
     }
     
@@ -511,8 +541,7 @@ public class GitVersionController implements VersionController
 	
     @Override
     public List<Revision> getRevisionsForPath(Collection<String> filepaths, String gitDir, boolean changesOnly) {
-    	return getRevisionsForPath(filepaths, gitDir, changesOnly, null, null,
-				null, DEFAULT_PAGE_SIZE);
+    	return getRevisionsForPath(filepaths, gitDir, changesOnly, null, null, null, DEFAULT_PAGE_SIZE);
     }
 
     @Override
@@ -600,8 +629,7 @@ public class GitVersionController implements VersionController
 					continue;
 				}
 
-				final FileDiffer[] diffs = getChangeInfo(c, repository,
-						pathFilter, changesOnly);
+				final FileDiffer[] diffs = getChangeInfo(c, repository, pathFilter, changesOnly);
 				if (diffs == null)
 					continue;
 				final Revision info = new Revision(c);
@@ -660,8 +688,7 @@ public class GitVersionController implements VersionController
 
 			TreeWalk tw = new TreeWalk(repository);
 			if (path != null && path.length() > 0)
-				tw.setFilter(AndTreeFilter.create(PathFilter.create(path),
-						TreeFilter.ANY_DIFF));
+				tw.setFilter(AndTreeFilter.create(PathFilter.create(path), TreeFilter.ANY_DIFF));
 			else
 				tw.setFilter(TreeFilter.ANY_DIFF);
 			
@@ -777,11 +804,11 @@ public class GitVersionController implements VersionController
 			};
 
 			if (LOG.isDebugEnabled())
-				LOG.debug("---BENCHMARK--- before outputDiff");
+				LOG.debug("---VERSION-CONTROL--- before outputDiff");
 			FileDiffer.outputDiff(sb, repository, formatter, objIds, fileModes,
 					path);
 			if (LOG.isDebugEnabled())
-				LOG.debug("---BENCHMARK--- after outputDiff");
+				LOG.debug("---VERSION-CONTROL--- after outputDiff");
 			formatter.flush();
 			return sb.toString();
 		} catch (IOException e) {
@@ -810,9 +837,7 @@ public class GitVersionController implements VersionController
 
 		final RevWalk rw = new RevWalk(repository);
 		try {
-			final ObjectId objHead = repository.resolve(revId != null ? revId
-														 :
-														 "HEAD");
+			final ObjectId objHead = repository.resolve(revId != null ? revId  : "HEAD");
 			if (objHead == null) {
 				LOG.error("Repository missing or coruppeted - HEAD not found in "
 						+ gitDir);
@@ -829,7 +854,7 @@ public class GitVersionController implements VersionController
 				rw.setTreeFilter(TreeFilter.ALL);
 
 			if (LOG.isDebugEnabled())
-				LOG.debug("---BENCHMARK--- getChangeInfo before loop");
+				LOG.debug("---VERSION-CONTROL--- getChangeInfo before loop");
 			for (RevCommit c : rw) {
 				final String cId = c.getId().toString();
 				if (!cId.contains(revId))
@@ -844,7 +869,7 @@ public class GitVersionController implements VersionController
 				break;
 			}
 			if (LOG.isDebugEnabled())
-				LOG.debug("---BENCHMARK--- getChangeInfo after loop");
+				LOG.debug("---VERSION-CONTROL--- getChangeInfo after loop");
 
 			rw.dispose();
 		} catch (AmbiguousObjectException e2) {
@@ -860,7 +885,7 @@ public class GitVersionController implements VersionController
     @Override
     public String getStatus(String dirPath, Collection<RevisionDifferItem> items) {
     	if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- getStatus start");
+			LOG.debug("---VERSION-CONTROL--- getStatus start");
 		int offset = Utils.formatPath(dirPath).length() + 1;
 		String status = dirPath+"\n";
 		for (RevisionDifferItem item : items) {
@@ -868,7 +893,7 @@ public class GitVersionController implements VersionController
 					.charAt(0), item.getPath().substring(offset));
 		}
 		if (LOG.isDebugEnabled())
-			LOG.debug("---BENCHMARK--- getStatus end");
+			LOG.debug("---VERSION-CONTROL--- getStatus end");
 		return status;
     }
 

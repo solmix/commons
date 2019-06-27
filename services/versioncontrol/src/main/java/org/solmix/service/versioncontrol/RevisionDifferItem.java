@@ -29,7 +29,7 @@ public class RevisionDifferItem
 	public RevisionDifferItem(FileDiffer fileDiff){
 /*		final String commitMsg = fileDiff.getCommit().getFullMessage();
 		if (log.isDebugEnabled())
-			log.debug("---BENCHMARK--- RevisionDiffItem after get message");
+			log.debug("---VERSION-CONTROL--- RevisionDiffItem after get message");
 		final String[] parsedMsg = commitMsg.split(";");
 		if (parsedMsg!=null && parsedMsg.length > 0){
 			try{

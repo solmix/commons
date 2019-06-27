@@ -23,28 +23,27 @@ public class ExtendedTreeIterator extends WorkingTreeIterator {
 	private static Logger logger = LoggerFactory.getLogger(ExtendedTreeIterator.class);
 
 	/**
-	 * the starting directory. This directory should correspond to the root of
-	 * the repository.
+	 * the starting directory. This directory should correspond to the root of the
+	 * repository.
 	 */
 	protected File directory;
 
 	/**
-	 * the file system abstraction which will be necessary to perform certain
-	 * file system operations.
+	 * the file system abstraction which will be necessary to perform certain file
+	 * system operations.
 	 */
 	protected FS fs;
-	
+
 	protected Set<String> extensionsForMd5 = null;
 
 	public ExtendedTreeIterator(Repository repo, String root) {
-		super("", 
-				repo.getConfig().get(WorkingTreeOptions.KEY));
+		super("", repo.getConfig().get(WorkingTreeOptions.KEY));
 
-		directory = new File(root+File.separator);
+		directory = new File(root + File.separator);
 		this.fs = repo.getFS();
 		Entry e = new ExtendedFileEntry(new File(root), fs, false);
-		init(new Entry[]{e});
-		//init(entries());
+		init(new Entry[] { e });
+//		 init(entries());
 		initRootIterator(repo);
 	}
 
@@ -54,34 +53,28 @@ public class ExtendedTreeIterator extends WorkingTreeIterator {
 		this.fs = fs;
 		init(entries());
 	}
+
 	
-	/**
-	 * Following two constructors are just passthough for the ZipfileTreeIterator
-	 */
 	protected ExtendedTreeIterator(final WorkingTreeIterator p) {
 		super(p);
 	}
-	
-	protected ExtendedTreeIterator(final String prefix,
-			WorkingTreeOptions options) {
+
+	protected ExtendedTreeIterator(final String prefix, WorkingTreeOptions options) {
 		super(prefix, options);
 	}
-	
+
 	@Override
 	public AbstractTreeIterator createSubtreeIterator(final ObjectReader reader)
 			throws IncorrectObjectTypeException, IOException {
 		final Entry e = current();
-/*		if (e instanceof ZipFileEntry){
-			return new ZipfileTreeIterator(this, ((ZipFileEntry) e).getFile().getPath());
-		}
-*/		return new ExtendedTreeIterator(this, ((ExtendedFileEntry) e).getFile(), fs);
+		return new ExtendedTreeIterator(this, ((ExtendedFileEntry) e).getFile(), fs);
 	}
 
 	private Entry[] entries() {
 		String s = directory.getPath();
 		final File[] all;
-		if (s.length() ==2 && s.charAt(1)==':')
-			all = (new File(s+File.separator)).listFiles();
+		if (s.length() == 2 && s.charAt(1) == ':')
+			all = (new File(s + File.separator)).listFiles();
 		else
 			all = directory.listFiles();
 		if (all == null)
@@ -99,15 +92,15 @@ public class ExtendedTreeIterator extends WorkingTreeIterator {
 	public void setExtensionsForMd5(Set<String> extensions) {
 		extensionsForMd5 = extensions;
 	}
-	
+
 	protected boolean isBinary(String path) {
-		if (extensionsForMd5 == null || extensionsForMd5.size() <=0 || path == null || path.length() <= 0)
+		if (extensionsForMd5 == null || extensionsForMd5.size() <= 0 || path == null || path.length() <= 0)
 			return false;
 		if (extensionsForMd5.contains(Utils.getFileExtension(Utils.fileName(path))))
 			return true;
 		return false;
 	}
-	
+
 	/**
 	 * Wrapper for a standard Java IO file
 	 */
@@ -119,41 +112,39 @@ public class ExtendedTreeIterator extends WorkingTreeIterator {
 		protected long length = -1;
 
 		protected long lastModified;
-		
+
 		protected String md5String;
-		
+
 		protected boolean isBinary;
-		
+
 		protected String name;
 
 		public ExtendedFileEntry(final File f, FS fs, boolean isBinary) {
 			file = f;
 			this.isBinary = isBinary;
-			
+
 			if (f.isDirectory()) {
-/*				if (new File(f, Constants.DOT_GIT).isDirectory())
-					mode = FileMode.GITLINK;
-				else
-*/				mode = FileMode.TREE;
+				mode = FileMode.TREE;
 			} else if (fs.canExecute(file))
 				mode = FileMode.EXECUTABLE_FILE;
 			else
 				mode = FileMode.REGULAR_FILE;
-			
+
 			length = file.length();
-			
-			name = file.getName().length() == 0 ? Utils.getRoot(file.getPath()): file.getName();
-			
-			if (isBinary){
+			//file name is:/xx/ ;end with space.
+			name = file.getName().length() == 0 ? Utils.getRoot(file.getPath()) : file.getName();
+
+			if (isBinary) {
 				getMd5();
-				if (md5String != null && md5String.length() >0)
+				if (md5String != null && md5String.length() > 0)
 					length = md5String.length();
 			}
-				
+
 		}
-		
-		public ExtendedFileEntry(){};
-		
+
+		public ExtendedFileEntry() {
+		};
+
 		@Override
 		public FileMode getMode() {
 			return mode;
@@ -170,7 +161,7 @@ public class ExtendedTreeIterator extends WorkingTreeIterator {
 		}
 
 		protected void getMd5() {
-			try{
+			try {
 				InputStream is = openInputStream();
 				md5String = Utils.getMd5Stream(is);
 				is.close();
@@ -179,7 +170,7 @@ public class ExtendedTreeIterator extends WorkingTreeIterator {
 				md5String = "";
 			}
 		}
-		
+
 		@Override
 		public long getLastModified() {
 			if (lastModified == 0)
@@ -213,26 +204,17 @@ public class ExtendedTreeIterator extends WorkingTreeIterator {
 
 	/**
 	 * @return The location of the working file. This is the same as {@code new
-	 *         File(getDirectory(), getEntryPath())} but may be faster by
-	 *         reusing an internal File instance.
+	 *         File(getDirectory(), getEntryPath())} but may be faster by reusing an
+	 *         internal File instance.
 	 */
 	public File getEntryFile() {
 		return ((FileEntry) current()).getFile();
 	}
 
-
-	
-/*	@Override
-	protected void init(final Entry[] list) {
-		for (int i = 0; i < list.length; i++) {
-			final Entry e = list[i];
-			if (e == null)
-				continue;
-			final String name = e.getName();
-			if (ArchiveUtils.isZipArchive(name)){
-				list[i] = new ZipfileTreeIterator.ZipFileEntry(name);
-			}
-		}
-		super.init(list);
-	}*/
+	/*
+	 * @Override protected void init(final Entry[] list) { for (int i = 0; i <
+	 * list.length; i++) { final Entry e = list[i]; if (e == null) continue; final
+	 * String name = e.getName(); if (ArchiveUtils.isZipArchive(name)){ list[i] =
+	 * new ZipfileTreeIterator.ZipFileEntry(name); } } super.init(list); }
+	 */
 }

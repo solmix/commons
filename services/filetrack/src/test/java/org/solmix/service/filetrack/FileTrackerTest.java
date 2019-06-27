@@ -13,13 +13,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.solmix.commons.util.FileUtils;
-import org.solmix.service.filetrack.event.ChangeEvent;
-import org.solmix.service.versioncontrol.support.Utils;
+import org.solmix.service.versioncontrol.support.GitVersionController;
 import org.solmix.test.TestUtils;
 
 public class FileTrackerTest {
 	private static Logger LOG = LoggerFactory.getLogger(FileTrackerTest.class);
-
+	private static final String TEST_FILE="testfile.for.git.txt";
+	private static GitVersionController gvc;
 	private static FileTracker tracker;
 	private static String gitBase;
 	@BeforeClass
@@ -27,7 +27,7 @@ public class FileTrackerTest {
 		TestUtils.load();
 		gitBase = TestUtils.destdir().getAbsolutePath();
 		tracker = FileTracker.getInstance();
-		FileUtils.delFolder(gitBase + File.separator + ".git");
+		FileUtils.delFolder(gitBase);
 		tracker.setAppDataDir(gitBase);
 		tracker.start();
 	}
@@ -37,18 +37,29 @@ public class FileTrackerTest {
 		if(tracker!=null) {
 			tracker.stop();
 		}
+		String base = TestUtils.basedir().getAbsolutePath();
+		String cfile=base+File.separator+TEST_FILE;
+		File f = new File(cfile);
+		if(f.exists()) {
+			f.delete();
+		}
+	}
+	@Test
+	public void skip() {
+		
 	}
 	@Test
 	public void test() throws IOException, InterruptedException {
 		
-		String cdir =gitBase + File.separator + "renametest";
-		Utils.recursiveCreateDir(cdir);
-		String cfile=cdir+File.separator+"configfile";
+		String base = TestUtils.basedir().getAbsolutePath();
+		String cfile=base+File.separator+TEST_FILE;
 		FileUtils.createNewFile(cfile, "#file content");
 		
 		TrackerInfo i = new TrackerInfo();
-		i.setPath("renametest");
-		final CountDownLatch latch = new CountDownLatch(2);
+		//监控的是目录，而不是文件
+		i.setPath(base);
+		i.setFilter(".*\\.txt");
+		final CountDownLatch latch = new CountDownLatch(1);
 		tracker.addTrackedDirs(gitBase, Collections.singletonList(i), new ChangeListener() {
 			
 			@Override
