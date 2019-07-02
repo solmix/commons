@@ -16,7 +16,7 @@
 		<bundle start-level="35">mvn:org.javassist/javassist/${javassist.version}</bundle>
 	</feature>
 	<feature name="solmix-karaf-wrapper" description="Karaf Wrapper" version="${apache.karaf.version}">
-		<bundle start-level="60">mvn:org.solmix.karaf/solmix-karaf-wrapper/${apache.karaf.version}-SNAPSHOT</bundle>
+		<bundle start-level="60">mvn:org.solmix.karaf/solmix-karaf-wrapper/${apache.karaf.version}</bundle>
 	</feature>
 	<feature name="solmix-tools" description="Solmix Tools" version="${project.version}">
 		<feature version="${project.version}">solmix-common-runtime</feature>

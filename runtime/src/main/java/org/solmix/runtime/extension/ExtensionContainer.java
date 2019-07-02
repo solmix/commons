@@ -37,7 +37,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.solmix.commons.util.Assert;
 import org.solmix.commons.util.Base64Utils;
 import org.solmix.commons.util.ObjectUtils;
 import org.solmix.commons.util.RSAUtils;
@@ -49,7 +48,6 @@ import org.solmix.runtime.ContainerFactory;
 import org.solmix.runtime.ContainerListener;
 import org.solmix.runtime.Extension;
 import org.solmix.runtime.bean.ConfiguredBeanProvider;
-import org.solmix.runtime.helper.AuthHelper;
 import org.solmix.runtime.proxy.ProxyManager;
 import org.solmix.runtime.proxy.ProxyRule;
 import org.solmix.runtime.proxy.support.ProxyManagerImpl;
@@ -538,13 +536,11 @@ public class ExtensionContainer implements Container {
         }
         if (!type.isAnnotationPresent(Extension.class)) {
             throw new IllegalArgumentException("Extension Type:["
-                + type.getName() + "] ,without @"
-                + Extension.class.getSimpleName() + " Annotation!");
+                + type.getName() + "] ,without @" + Extension.class.getSimpleName() + " Annotation!");
         }
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
-        	DefaultExtensionLoader<T> newLoader  = new DefaultExtensionLoader<T>(
-                    type, extensionManager,this);
+        	DefaultExtensionLoader<T> newLoader  = new DefaultExtensionLoader<T>( type, extensionManager,this);
         	if(!newLoader.isEmptyLoaded()){
         		 EXTENSION_LOADERS.putIfAbsent(type, newLoader);
                  loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);

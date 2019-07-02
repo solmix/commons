@@ -40,7 +40,7 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-  <version>${apache.karaf.version}-SNAPSHOT</version>
+  <version>${apache.karaf.version}</version>
   <packaging>bundle</packaging>
 	<build>
         <resources>
