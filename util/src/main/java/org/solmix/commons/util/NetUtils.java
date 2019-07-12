@@ -323,4 +323,24 @@ public class NetUtils {
         return new IPAddress(addr).toIpAddrString();
     }
     
+    private static String hextetsToIPv6String(int[] hextets) {
+        StringBuilder sb = new StringBuilder(39);
+        boolean lastWasNumber = false;
+        for (int i = 0; i < hextets.length; i++) {
+            boolean b = hextets[i] >= 0;
+            if (b) {
+                if (lastWasNumber) {
+                    sb.append(':');
+                }
+                sb.append(Integer.toHexString(hextets[i]));
+            } else {
+                if (i == 0 || lastWasNumber) {
+                    sb.append("::");
+                }
+            }
+            lastWasNumber = b;
+        }
+        return sb.toString();
+    }
+    
 }

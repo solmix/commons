@@ -444,10 +444,12 @@ public class Watcher implements Runnable {
 		} else if (!passedFilter(path, eventAction, filter)) {
 			//处理没通过filter的
 			if (oldPath == null) {
-				log.info("path and target didn't pass filter {}" , path);
+				if(log.isDebugEnabled())
+					log.debug("path and target didn't pass filter {}" , path);
 				eventAction = EventActionsEnum.SKIPPED;
 			} else if (!passedFilter(oldPath, EventActionsEnum.DELETE, filter)) {
-				log.info("source and target didn't pass filter " + path + " " + oldPath);
+				if(log.isDebugEnabled())
+					log.debug("source and target didn't pass filter " + path + " " + oldPath);
 				eventAction = EventActionsEnum.SKIPPED;
 			} else {
 				// rename from passed filter to filtered - change event to delete.
@@ -471,7 +473,6 @@ public class Watcher implements Runnable {
 			senderQueue.put(currEvent);
 			// Current event is now reference for further events
 			prevEvent = currEvent;
-			log.info("Event Queued: " + eventAction + " " + path + " " + (oldPath != null ? oldPath : ""));
 		} catch (InterruptedException e) {
 			log.error("Queue action interrupted " + e.getMessage(), e);
 		}

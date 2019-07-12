@@ -50,8 +50,8 @@ public abstract class AbstractFormatter implements Formatter {
     protected NumberFormat getNumberFormat(Locale locale){
         NumberFormat res = NumberFormat.getInstance(locale);
 
-        res.setMinimumFractionDigits(1);
-        res.setMaximumFractionDigits(1);
+        res.setMinimumFractionDigits(0);
+        res.setMaximumFractionDigits(2);
         return res;
     }
 
