@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.solmix.exchange.scheme.Scheme;
 import org.solmix.exchange.scheme.SchemeRegistry;
 import org.solmix.exchange.util.IPVersion;
@@ -46,7 +46,7 @@ import org.solmix.exchange.util.IPVersion;
  */
 public class URL implements Comparable<URL> {
 
-    private static final Logger logger = Logger.getLogger(URL.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(URL.class.getName());
 
     private static final char SEPARATOR_CHAR = '/';
 
@@ -789,7 +789,7 @@ public class URL implements Comparable<URL> {
                 if (fatalResolveErrorsEnabled) {
                     throw new IllegalStateException(e);
                 }
-                logger.log(Level.WARNING, e.getMessage(), e);
+                logger.warn( e.getMessage(), e);
                 if (e.getMessage() != null && !e.getMessage().endsWith("invalid IPv6 address") &&
                         hostname.charAt(0) != '[' &&
                         hostname.charAt(hostname.length() - 1) != ']') {

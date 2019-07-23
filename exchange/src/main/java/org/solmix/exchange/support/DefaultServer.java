@@ -90,7 +90,7 @@ public class DefaultServer implements Server {
     private void makeTransporterForServer(TransporterFactory tgFactory) throws IOException {
         EndpointInfo ei = endpoint.getEndpointInfo();
         transporter = tgFactory.getTransporter(ei, container);
-        LOG.info("Server published address is {}",ei.getAddress());
+        LOG.debug("Server published address is {}",ei.getAddress());
 
         serverRegistry = container.getExtension(ServerRegistry.class);
         managedEndpoint = createManagedEndpoint();

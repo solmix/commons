@@ -62,7 +62,7 @@
 	<properties>
 		<solmix.osgi.export.pkg>org.solmix.service.velocity*</solmix.osgi.export.pkg>
 		<solmix.osgi.import.pkg>*</solmix.osgi.import.pkg>
-		<solmix.osgi.dynamic.import>*</solmix.osgi.dynamic.import>
+		<solmix.osgi.dynamic.import>javax.annotation;version="[1.0,1.1)",*</solmix.osgi.dynamic.import>
 	</properties>
 	<packaging>bundle</packaging>
 	<name>Solmix :: Services :: velocity</name>

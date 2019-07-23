@@ -23,7 +23,6 @@
 			<scope>test</scope>
 		</dependency>
   </dependencies>
-  <version>0.7.1</version>
   <build>
 		<plugins>
 			<plugin>

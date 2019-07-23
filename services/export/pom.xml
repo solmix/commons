@@ -73,7 +73,8 @@
 	<properties>
 		<solmix.osgi.export.pkg>org.solmix.service.export*</solmix.osgi.export.pkg>
 		<solmix.osgi.import.pkg>
-			org.apache.poi*;resolution:=optional;version="[4.0,5)",*
+			org.apache.poi*;resolution:=optional;version="[4.0,5)",
+			javax.annotation;version="[1.0,1.1)",*
 		</solmix.osgi.import.pkg>
 		<solmix.osgi.dynamic.import>*</solmix.osgi.dynamic.import>
 	</properties>

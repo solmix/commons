@@ -92,8 +92,8 @@ public class DefaultComponentManager implements ComponentManager, ContainerListe
                 try {
                     ManagedContainer mc = new ManagedContainer(container);
                     manager.unregister(mc);
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("unregistered " + mc.getObjectName());
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("unregistered " + mc.getObjectName());
                     }
                 } catch (JMException e) {
                     // ignore
@@ -144,7 +144,7 @@ public class DefaultComponentManager implements ComponentManager, ContainerListe
                     connectorFactory.createConnector();
                 } catch (IOException ex) {
                     connectFailed = true;
-                    LOG.info("START_CONNECTOR_FAILURE_MSG", new Object[] { ex });
+                    LOG.warn("START_CONNECTOR_FAILURE_MSG", new Object[] { ex });
                 }
             }
             if (!connectFailed && null != container) {            
@@ -265,8 +265,8 @@ public class DefaultComponentManager implements ComponentManager, ContainerListe
         ObjectInstance instance = null;
         try {
             instance = mserver.registerMBean(obj, name);  
-            if (LOG.isInfoEnabled()) {
-                LOG.info("registering MBean " + name + ": " + obj);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("registering MBean " + name + ": " + obj);
             }
         } catch (InstanceAlreadyExistsException e) {            
             if (forceRegistration) {

@@ -57,14 +57,16 @@ public class KeystoreInfo
         this.keyCN = keyCN;
     }
 
-    /**
-     * @return the hqDefault
-     */
+  /**
+   * 是否默认创建
+   * @return
+   */
     public boolean isDefault() {
         return isDefault;
     }
     /**
-     * @param hqDefault the hqDefault to set
+     * 是否默认创建
+     * @return
      */
     public void setIsDefault(boolean isDefault) {
         this.isDefault = isDefault;

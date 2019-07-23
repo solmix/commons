@@ -88,7 +88,7 @@
 	</build>
 	<properties>
 		<solmix.osgi.export.pkg>org.solmix.karaf.command*</solmix.osgi.export.pkg>
-		<solmix.osgi.import.pkg>*</solmix.osgi.import.pkg>
+		<solmix.osgi.import.pkg>javax.annotation;version="[1.0,1.1)",*</solmix.osgi.import.pkg>
 	</properties>
 	<name>Solmix :: Karaf :: Tools</name>
 </project>

@@ -45,8 +45,11 @@ public class DefaultSSLProvider implements SSLProvider
 {
 
     private SSLContext sslContext;
-
     public DefaultSSLProvider(Container container, KeystoreInfo keystoreInfo, boolean acceptUnverifiedCertificates)
+    {	
+    	this(container,keystoreInfo,false,acceptUnverifiedCertificates);
+    }
+    public DefaultSSLProvider(Container container, KeystoreInfo keystoreInfo,boolean allowAll, boolean acceptUnverifiedCertificates)
     {
         try {
             KeystoreManager keystoreMgr = Containers.createExtensionIfNoProvided(container, KeystoreManager.class);
@@ -54,10 +57,17 @@ public class DefaultSSLProvider implements SSLProvider
             KeyManagerFactory keyManagerFactory = getKeyManagerFactory(trustStore, keystoreInfo.getFilePassword());
             TrustManagerFactory trustManagerFactory = getTrustManagerFactory(trustStore);
             X509TrustManager defaultTrustManager = (X509TrustManager) trustManagerFactory.getTrustManagers()[0];
-            X509TrustManager customTrustManager = keystoreMgr.getCustomTrustManager(defaultTrustManager, keystoreInfo, acceptUnverifiedCertificates,
-                trustStore);
+            TrustManager[] trustManagers;
+            if(allowAll) {
+            	trustManagers = new TrustManager[] {new AllowAllTrustManager()};
+            }else {
+            	  X509TrustManager customTrustManager = keystoreMgr.getCustomTrustManager(defaultTrustManager, keystoreInfo, acceptUnverifiedCertificates,
+                          trustStore);
+            	  trustManagers=new TrustManager[] { customTrustManager };
+            }
+          
             sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(keyManagerFactory.getKeyManagers(), new TrustManager[] { customTrustManager }, new SecureRandom());
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
