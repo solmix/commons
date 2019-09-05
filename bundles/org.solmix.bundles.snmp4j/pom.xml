@@ -9,8 +9,8 @@
   <properties>
     <pkgVersion>2.7.0</pkgVersion>
     <pkgArtifactId>snmp4j</pkgArtifactId>
-    <solmix.osgi.export>org.snmp4j.*</solmix.osgi.export>
-    <pkgGroupId>com.mchange</pkgGroupId>
+    <solmix.osgi.export>org.snmp4j*</solmix.osgi.export>
+    <pkgGroupId>org.snmp4j</pkgGroupId>
     <solmix.osgi.import.pkg>
     		org.apache.log4j.*;resolution:=optional
     </solmix.osgi.import.pkg>
@@ -52,6 +52,7 @@
     </plugins>
   </build>
    <name>Solmix :: Bundles :: SNMP4J</name>
+    <packaging>bundle</packaging>
    <dependencies>
    	<dependency>
 	    <groupId>org.snmp4j</groupId>
