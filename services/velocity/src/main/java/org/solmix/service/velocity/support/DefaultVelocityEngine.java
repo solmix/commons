@@ -44,6 +44,8 @@ import org.apache.velocity.util.RuntimeServicesAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.solmix.commons.util.Assert;
+import org.solmix.commons.util.ClassLoaderUtils;
+import org.solmix.commons.util.ClassLoaderUtils.ClassLoaderHolder;
 import org.solmix.commons.util.ObjectUtils;
 import org.solmix.commons.util.StringUtils;
 import org.solmix.runtime.Extension;
@@ -78,18 +80,25 @@ public class DefaultVelocityEngine implements VelocityEngine,ProductionAware
     
     @PostConstruct
     public void init() throws Exception{
-        info.init(resourceManager);
-        LOG.debug("Velocity Engine configration info: {}", info);
-        
-        ri.setConfiguration(info.getProperties());
-        ri.setApplicationAttribute(ResourceManager.class.getName(), resourceManager);
-        ri.setProperty(RuntimeConstants.EVENTHANDLER_REFERENCEINSERTION, RuntimeServicesExposer.class.getName());
-        ri.init();
-        
-        CloneableEventCartridge eventCartridge = info.getEventCartridge();
-        RuntimeServices rs = Assert.assertNotNull((RuntimeServices) ri.getProperty(RUNTIME_SERVICES_KEY), "RuntimeServices");
-
-        eventCartridge.initOnce(rs);
+    	  ClassLoaderHolder origLoader = null;
+          try {
+              origLoader = ClassLoaderUtils.setThreadContextClassloader(DefaultVelocityEngine.class.getClassLoader());
+              info.init(resourceManager);
+              LOG.debug("Velocity Engine configration info: {}", info);
+              
+              ri.setConfiguration(info.getProperties());
+              ri.setApplicationAttribute(ResourceManager.class.getName(), resourceManager);
+              ri.setProperty(RuntimeConstants.EVENTHANDLER_REFERENCEINSERTION, RuntimeServicesExposer.class.getName());
+              ri.init();
+              
+              CloneableEventCartridge eventCartridge = info.getEventCartridge();
+              RuntimeServices rs = Assert.assertNotNull((RuntimeServices) ri.getProperty(RUNTIME_SERVICES_KEY), "RuntimeServices");
+              eventCartridge.initOnce(rs);
+          } finally {
+              if (origLoader != null) {
+                  origLoader.reset();
+              }
+          }
     }
     @Override
     public String[] getDefaultExtensions() {
