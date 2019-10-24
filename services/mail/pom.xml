@@ -10,11 +10,24 @@
   	<dependency>
   		<groupId>org.solmix.common</groupId>
   		<artifactId>solmix-common-runtime</artifactId>
+  		<scope>provided</scope>
   	</dependency>
   	<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
 			<version>1.4.4</version>
+			<exclusions>
+			<exclusion>
+			<artifactId>activation</artifactId>
+			<groupId>javax.activation</groupId>
+			</exclusion>
+			</exclusions>
+		</dependency>
+  	<dependency>
+  <groupId>org.apache.servicemix.specs</groupId>
+  <artifactId>org.apache.servicemix.specs.activation-api-1.1</artifactId>
+  <version>2.5.0</version>
+  <type>bundle</type>
 		</dependency>
   	<dependency>
   		<groupId>org.solmix.test</groupId>
@@ -42,8 +55,10 @@
 						<Bundle-Category>solmix</Bundle-Category>
 						<Export-Package>${solmix.osgi.export.pkg}</Export-Package>
 						<Import-Package>${solmix.osgi.import.pkg}</Import-Package>
+						<!-- <Embed-Dependency>*;scope=compile</Embed-Dependency> -->
 						<!-- <DynamicImport-Package>${solmix.osgi.dynamic.import}</DynamicImport-Package> -->
 						<_failok>false</_failok>
+						<!-- <_exportcontents>javax.mail.*;version="1.4.7"</_exportcontents>  -->
 						<_removeheaders>Ignore-Package,Include-Resource,Private-Package</_removeheaders>
 					</instructions>
 				</configuration>
@@ -52,7 +67,7 @@
 	</build>
 	<properties>
 		<solmix.osgi.export.pkg>org.solmix.service.mail.*</solmix.osgi.export.pkg>
-		<solmix.osgi.import.pkg>!org.solmix.service.mail.*,*</solmix.osgi.import.pkg>
+		<solmix.osgi.import.pkg>!org.solmix.service.mail.*,sun.security.util;resolution:=optional,*</solmix.osgi.import.pkg>
 		<solmix.osgi.dynamic.import>*</solmix.osgi.dynamic.import>
 	</properties>
 	<packaging>bundle</packaging>
