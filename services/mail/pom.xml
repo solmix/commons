@@ -23,17 +23,16 @@
 			</exclusion>
 			</exclusions>
 		</dependency>
-  	<dependency>
-  <groupId>org.apache.servicemix.specs</groupId>
-  <artifactId>org.apache.servicemix.specs.activation-api-1.1</artifactId>
-  <version>2.5.0</version>
-  <type>bundle</type>
+	  	<dependency>
+			<groupId>org.apache.servicemix.specs</groupId>
+ 			<artifactId>org.apache.servicemix.specs.activation-api-1.1</artifactId>
+	  		<version>2.5.0</version>
 		</dependency>
-  	<dependency>
-  		<groupId>org.solmix.test</groupId>
-  		<artifactId>solmix-test</artifactId>
-  		<scope>test</scope>
-  	</dependency>
+	  	<dependency>
+	  		<groupId>org.solmix.test</groupId>
+	  		<artifactId>solmix-test</artifactId>
+	  		<scope>test</scope>
+	  	</dependency>
   </dependencies>
   <build>
   <resources>    
