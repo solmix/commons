@@ -19,6 +19,7 @@
 package org.solmix.commons.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -26,6 +27,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.List;
 
 
@@ -69,6 +71,18 @@ public class ClassLoaderUtils
         }else{
             return getResource(resourceName,callingClass);
         }
+    }
+    public static Enumeration<URL>  getResources(ClassLoader loader,String resourceName, Class<?> callingClass) throws IOException {
+    	Enumeration<URL> url=null;
+    	if(loader!=null){
+    		url=  loader.getResources(resourceName);
+    		if(url!=null)
+    			return url;
+    		else
+    			return getResources(resourceName,callingClass);
+    	}else{
+    		return getResources(resourceName,callingClass);
+    	}
     }
     /**
      * Load a given resource. <p/> This method will try to load the resource
@@ -117,6 +131,40 @@ public class ClassLoaderUtils
         }
 
         return url;
+    }
+    public static Enumeration<URL> getResources(String resourceName, Class<?> callingClass) throws IOException {
+    	Enumeration<URL> url = Thread.currentThread().getContextClassLoader().getResources(resourceName);
+    	if (url == null && resourceName.startsWith("/")) {
+    		//certain classloaders need it without the leading /
+    		url = Thread.currentThread().getContextClassLoader()
+    				.getResources(resourceName.substring(1));
+    	}
+    	
+    	ClassLoader cluClassloader = ClassLoaderUtils.class.getClassLoader();
+    	if (cluClassloader == null) {
+    		cluClassloader = ClassLoader.getSystemClassLoader();
+    	}
+    	if (url == null) {
+    		url = cluClassloader.getResources(resourceName);
+    	}
+    	if (url == null && resourceName.startsWith("/")) {
+    		//certain classloaders need it without the leading /
+    		url = cluClassloader.getResources(resourceName.substring(1));
+    	}
+    	
+    	if (url == null&&callingClass!=null) {
+    		ClassLoader cl = callingClass.getClassLoader();
+    		
+    		if (cl != null) {
+    			url = cl.getResources(resourceName);
+    		}
+    	}
+    	
+    	if ((url == null) && (resourceName != null) && (resourceName.charAt(0) != '/')) {
+    		return getResources('/' + resourceName, callingClass);
+    	}
+    	
+    	return url;
     }
     /**
      * Load a class with a given name. <p/> It will try to load the class in the
