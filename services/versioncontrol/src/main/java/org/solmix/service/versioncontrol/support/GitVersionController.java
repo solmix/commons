@@ -49,6 +49,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.solmix.commons.util.ObjectUtils;
 import org.solmix.service.versioncontrol.FileDiffer;
 import org.solmix.service.versioncontrol.Revision;
 import org.solmix.service.versioncontrol.RevisionDifferItem;
@@ -477,7 +478,7 @@ public class GitVersionController implements VersionController
 		long lastModified = file.lastModified();
 		long fileSize = file.length();
 		PairLong info = fileInfoMap.get(path);
-		if (info != null && info.getKey().equals(lastModified) && info.getValue().equals(fileSize) && file.exists()){
+		if (info != null && ObjectUtils.isEquals(info.getKey(),lastModified) &&  ObjectUtils.isEquals(info.getValue(),fileSize) && file.exists()){
 			LOG.info("Date and size unchanged, skipping - "+path);
 			return false;
 		}

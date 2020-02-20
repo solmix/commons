@@ -1,6 +1,7 @@
 package org.solmix.commons.util;
 
 import java.io.IOException;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -89,10 +90,14 @@ public class NetUtils {
         return port > MIN_PORT || port <= MAX_PORT;
     }
 
-    private static final Pattern ADDRESS_PATTERN = Pattern.compile("^\\d{1,3}(\\.\\d{1,3}){3}\\:\\d{1,5}$");
 
     public static boolean isValidAddress(String address){
-    	return ADDRESS_PATTERN.matcher(address).matches();
+    	  boolean iPv4LiteralAddress = IPAddressUtil.isIPv4LiteralAddress(address);
+          boolean iPv6LiteralAddress = IPAddressUtil.isIPv6LiteralAddress(address);
+          if (!(iPv4LiteralAddress||iPv6LiteralAddress)){
+              return false;
+          }
+          return true;
     }
 
     private static final Pattern LOCAL_IP_PATTERN = Pattern.compile("127(\\.\\d{1,3}){3}$");
@@ -292,38 +297,93 @@ public class NetUtils {
     }
 
     public static String toAddressString(InetSocketAddress address) {
-        return address.getAddress().getHostAddress() + ":" + address.getPort();
+    	InetAddress ia = address.getAddress();
+    	if(ia instanceof Inet6Address) {
+    		return ia.getHostAddress() + ":" + address.getPort();
+    	}else {
+    		
+    	}
+        return "["+ia.getHostAddress() + "]:" + address.getPort();
     }
     
+    /**
+     * 将字符串地址转化为socket地址：
+     * <li>ipv4: host:port
+     * <li>ipv6: [host]:port
+     * @param address
+     * @return
+     */
     public static InetSocketAddress toAddress(String address) {
-        int i = address.indexOf(':');
-        String host;
-        int port;
-        if (i > -1) {
-            host = address.substring(0, i);
-            port = Integer.parseInt(address.substring(i + 1));
-        } else {
-            host = address;
-            port = 0;
-        }
-        return new InetSocketAddress(host, port);
+    	int start_v6=address.indexOf('['),end_v6=address.indexOf(']');
+    	if(start_v6!=-1&&end_v6!=-1) {
+    		String host=address.substring(start_v6+1,end_v6);
+    		String sport = address.substring(end_v6+1);
+    		int i = sport.indexOf(':');
+    		int port;
+    		if(i>-1) {
+    			port=Integer.parseInt(sport.substring(i + 1));
+    		}else {
+    			port=0;
+    		}
+    		return new InetSocketAddress(host, port);
+    	}else {
+    		int i = address.indexOf(':');
+            String host;
+            int port;
+            if (i > -1) {
+                host = address.substring(0, i);
+                port = Integer.parseInt(address.substring(i + 1));
+            } else {
+                host = address;
+                port = 0;
+            }
+            return new InetSocketAddress(host, port);
+    	}
+        
     }
     
     public static String toURL(String protocol, String host, int port, String path) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(protocol).append("://");
-		sb.append(host).append(':').append(port);
-		if( path.charAt(0) != '/' )
-			sb.append('/');
-		sb.append(path);
-		return sb.toString();
+		try {
+			InetAddress ia = InetAddress.getByName(host);
+			if(ia instanceof Inet6Address) {
+				sb.append('[').append(host).append(']');
+			}else {
+				sb.append(host);
+			}
+			sb.append(':').append(port);
+			if( path.charAt(0) != '/' )
+				sb.append('/');
+			sb.append(path);
+			return sb.toString();
+		} catch (UnknownHostException e) {
+			throw new IllegalArgumentException(e);
+		}
+		
 	}
     
     public static String toIpAddrString(final InetAddress addr){
         return new IPAddress(addr).toIpAddrString();
     }
     
-    private static String hextetsToIPv6String(int[] hextets) {
+    public static String getIpFormatString(String host) {
+    	try{
+    		InetAddress ia = InetAddress.getByName(host);
+    		if(ia instanceof Inet6Address) {
+                return "["+host+"]";
+            }else {
+                return host;
+            }
+        }catch (UnknownHostException e) {
+          	return host;
+        }
+    }
+    public static String toAddressString(String host,int port) {
+    	return getIpFormatString(host)+":"+port;
+    }
+    
+    public static String hextetsToIPv6String(int[] hextets) {
         StringBuilder sb = new StringBuilder(39);
         boolean lastWasNumber = false;
         for (int i = 0; i < hextets.length; i++) {

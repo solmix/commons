@@ -34,8 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.solmix.commons.util.StringUtils;
-
 /**
  * Provides a base datatype decorator that enables additional functionality to
  * be added to a Map via decoration.
@@ -310,8 +308,8 @@ public class DataTypeMap implements Map<String, Object> {
         return getDate(key,defaultValue,null);
     }
     public Date getDate(String key, Date defaultValue,String pattern) {
-        Object value = get(key);
-        if (value == null)
+        Object value = trimToNull(key);
+        if (value == null )
             return defaultValue;
         if (value instanceof Date)
             return (Date) value;

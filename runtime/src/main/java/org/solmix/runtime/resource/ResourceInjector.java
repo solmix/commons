@@ -341,7 +341,7 @@ public class ResourceInjector extends AbstractAnnotationVisitor {
         
         boolean accessible = false; 
         for (Method method : getPostConstructMethods()) {
-            PostConstruct pc = method.getAnnotation(PostConstruct.class);
+            PostConstruct pc =findAnnotation(method,PostConstruct.class);
             if (pc != null) {
                 try {
                     Reflection.setAccessible(method);
@@ -361,7 +361,7 @@ public class ResourceInjector extends AbstractAnnotationVisitor {
         
         boolean accessible = false; 
         for (Method method : getPreDestroyMethods()) {
-            PreDestroy pd = method.getAnnotation(PreDestroy.class);
+            PreDestroy pd =findAnnotation(method,PreDestroy.class);
             if (pd != null) {
                 try {
                     Reflection.setAccessible(method);
@@ -387,22 +387,64 @@ public class ResourceInjector extends AbstractAnnotationVisitor {
     }
 
     private Collection<Method> getAnnotatedMethods(Class<? extends Annotation> acls) { 
-
+    	
         Collection<Method> methods = new LinkedList<Method>(); 
         addAnnotatedMethods(acls, getTarget().getClass().getMethods(), methods); 
         addAnnotatedMethods(acls, Reflection.getDeclaredMethods(getTarget().getClass()), methods);
+        
         if (getTargetClass() != getTarget().getClass()) {
             addAnnotatedMethods(acls, getTargetClass().getMethods(), methods); 
             addAnnotatedMethods(acls, Reflection.getDeclaredMethods(getTargetClass()), methods);            
         }
         return methods;
     }
-    
+    private static <A extends Annotation> A searchOnInterfaces(Method method, Class<A> annotationType, Class<?>[] ifcs) {
+		A annotation = null;
+		for (Class<?> iface : ifcs) {
+				try {
+					Method equivalentMethod = iface.getMethod(method.getName(), method.getParameterTypes());
+					annotation = equivalentMethod.getAnnotation(annotationType);
+				}
+				catch (NoSuchMethodException ex) {
+					// Skip this interface - it doesn't have the method...
+				}
+				if (annotation != null) {
+					break;
+				}
+		}
+		return annotation;
+	}
+    public static <A extends Annotation> A  findAnnotation(Method method, Class<A> acls) {
+
+    	A  annotation =method.getAnnotation(acls);
+    	Class<?> clazz = method.getDeclaringClass();
+    	if (annotation == null) {
+			annotation = searchOnInterfaces(method, acls, clazz.getInterfaces());
+		}
+    	while (annotation == null) {
+			clazz = clazz.getSuperclass();
+			if (clazz == null || clazz.equals(Object.class)) {
+				break;
+			}
+			try {
+				Method equivalentMethod = clazz.getDeclaredMethod(method.getName(), method.getParameterTypes());
+				annotation = equivalentMethod.getAnnotation(acls);
+			}
+			catch (NoSuchMethodException ex) {
+				// No equivalent method found
+			}
+			if (annotation == null) {
+				annotation = searchOnInterfaces(method, acls, clazz.getInterfaces());
+			}
+		}
+    	return annotation;
+    }
     private void addAnnotatedMethods(Class<? extends Annotation> acls, Method[] methods,
         Collection<Method> annotatedMethods) {
-        for (Method method : methods) { 
-            if (method.getAnnotation(acls) != null 
-                && !annotatedMethods.contains(method)) {
+        for (Method method : methods) {
+        	Annotation  annotation =findAnnotation(method, acls);
+        	
+            if (annotation != null   && !annotatedMethods.contains(method)) {
                 annotatedMethods.add(method); 
             }
         }
