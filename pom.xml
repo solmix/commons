@@ -144,7 +144,7 @@
 		<commons-jexl3.version>3.0</commons-jexl3.version>
 		<commons-lang3.version>3.4</commons-lang3.version>
 		<curator.version>2.10.0</curator.version>
-		<zookeeper.version>3.4.8</zookeeper.version>
+		<zookeeper.version>3.4.14</zookeeper.version>
 		<jasypt.version>1.9.2</jasypt.version>
 		<sourceReleaseAssemblyDescriptor>src/main/assembly/assembly.xml</sourceReleaseAssemblyDescriptor>
 	</properties>
