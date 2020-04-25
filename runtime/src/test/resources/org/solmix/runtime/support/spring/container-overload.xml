@@ -18,6 +18,7 @@
 			<entry key="runtime.production" value="false" />
 		</c:properties>
 		<c:ref container-id="solmix" filter="org.solmix.runtime.service*"/>
+		<c:ref container-id="solmix" filter="org.solmix.runtime.service*"/>
 		<c:listeners>
 			<bean class="org.solmix.runtime.extension.ContainerListenerImpl"></bean>
 		</c:listeners> 

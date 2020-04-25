@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.solmix.runtime.Container;
 import org.solmix.runtime.ContainerFactory;
+import org.solmix.runtime.extension.ExtensionContainer;
 import org.solmix.runtime.service.ContainerAwareService;
 import org.solmix.runtime.service.ContainerRefTestService;
 import org.solmix.runtime.service.DateTimeService;
@@ -126,7 +127,7 @@ public class ContainerApplicationContextTest {
             Container c = (Container) overload.getBean("solmix");
             Assert.assertEquals(c.getContainerListeners().size(), 2);
             Assert.assertEquals(1, overload.getConfigResources().length);
-
+            ExtensionContainer ec =(ExtensionContainer)c;
             ContainerApplicationContext ctx = new ContainerApplicationContext(
                 file, true);
             Assert.assertEquals(2, ctx.getConfigResources().length);

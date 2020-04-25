@@ -1,0 +1,87 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.solmix.bundles</groupId>
+    <artifactId>bundles</artifactId>
+    <version>0.5.0</version>
+  </parent>
+  <artifactId>org.solmix.bundles.grpc</artifactId>
+  <properties>
+    <pkgVersion>1.26.0</pkgVersion>
+    <pkgGroupId>io.grpc</pkgGroupId>
+    <pkgArtifactId>grpc</pkgArtifactId>
+    <solmix.osgi.export>io.grpc.*</solmix.osgi.export>
+    
+    <solmix.osgi.import.pkg>
+    !io.grpc.*,
+    !io.perfmark.*,
+    !io.opencensus.*,
+    !com.google.rpc.*,
+    !javax.annotation.*,
+    		*
+    </solmix.osgi.import.pkg>
+    <solmix.osgi.private.pkg></solmix.osgi.private.pkg>
+    <solmix.osgi.failok>true</solmix.osgi.failok>
+    <solmix.category>guava</solmix.category>
+  </properties> 
+   <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                <include>**</include>
+                  <!-- <include>io.grpc:grpc-netty</include>
+                  <include>io.grpc:grpc-protobuf</include>
+                  <include>io.grpc:grpc-stub</include>
+                  <include>com.google.api.grpc:proto-google-common-protos</include> -->
+                </includes>
+                <excludes>
+                	<exclude>io.netty:*</exclude>
+                	<exclude>com.google.code.gson:*</exclude>
+                	<exclude>com.google.guava:*</exclude>
+                </excludes>
+              </artifactSet>
+              
+              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+   <name>Solmix :: Bundles :: grpc</name>
+    <packaging>bundle</packaging>
+   <dependencies>
+   	 <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty</artifactId>
+            <version>${pkgVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${pkgVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>${pkgVersion}</version>
+        </dependency>
+        <dependency>
+           <groupId>com.google.api.grpc</groupId>
+  <artifactId>proto-google-common-protos</artifactId>
+            <version>1.12.0</version>
+        </dependency>
+         
+   </dependencies>
+   <version>1.26.0</version>
+</project>

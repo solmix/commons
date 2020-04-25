@@ -21,7 +21,7 @@ xmlns:beans="http://www.springframework.org/schema/beans"
             		<xsd:element name="ref" type="refType" minOccurs="0"
             			maxOccurs="unbounded">
             		</xsd:element>
-            		<xsd:element name="tx" type="txType"></xsd:element>
+            		<xsd:element name="tx" type="txType" minOccurs="0" maxOccurs="1"></xsd:element>
             	</xsd:choice>
             </xsd:sequence>
             

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.solmix.commons.util.DOMUtils;
 import org.solmix.commons.util.DataUtils;
 import org.solmix.commons.util.StringUtils;
 import org.solmix.runtime.Container;
@@ -35,6 +36,7 @@ import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.beans.factory.xml.ParserContext;
@@ -96,7 +98,26 @@ public class ContainerDefinitionParser extends AbstractBeanDefinitionParser
         }
 
     }
-
+    @Override
+	protected void parseChildElements(Element element, ParserContext ctx, BeanDefinitionBuilder bean) {
+		Element el = DOMUtils.getFirstElement(element);
+		ManagedList<Object> target = new ManagedList<Object>();
+		while (el != null) {
+			String name = el.getLocalName();
+			if("ref".equals(name)) {
+				BeanDefinitionBuilder component = BeanDefinitionBuilder.genericBeanDefinition(ContainerReference.class);
+	        	parseRefAttributes(el, ctx, component);
+	        	target.add(component.getBeanDefinition());
+			}else {
+				parseElement(ctx, bean, el, name);
+			}
+			
+			el = DOMUtils.getNextElement(el);
+		}
+		if(target.size()>0) {
+			bean.addPropertyValue("references", target);
+		}
+	}
     private void copyProps(BeanDefinitionBuilder src, BeanDefinition def) {
         for (PropertyValue v : src.getBeanDefinition().getPropertyValues().getPropertyValues()) {
             if (!"name".equals(v.getName())) {
@@ -152,10 +173,6 @@ public class ContainerDefinitionParser extends AbstractBeanDefinitionParser
             List<?> lis = ctx.getDelegate().parseListElement(e,
                 bean.getBeanDefinition());
             bean.addPropertyValue("extensionBindings", lis);
-        } else if ("ref".equals(name)) {
-        	BeanDefinitionBuilder component = BeanDefinitionBuilder.genericBeanDefinition(ContainerReference.class);
-        	parseRefAttributes(e, ctx, component);
-        	bean.addPropertyValue("reference", component.getBeanDefinition());
         } else if ("tx".equals(name)) {
         	BeanDefinitionBuilder component = BeanDefinitionBuilder.genericBeanDefinition(TxProxyRule.class);
         	parseAttribute(component,"proxy-target-class","proxyTargetClass",e);

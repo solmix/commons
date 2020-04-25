@@ -13,39 +13,52 @@ public class SortAttr {
 
 	/**
 	 * 按column升序
+	 * 
 	 * @param column
 	 * @return
 	 */
 	public static SortAttr buildAsc(String column) {
 		return new SortAttr(column, false);
 	}
-	
+
 	/**
 	 * 按column降序
+	 * 
 	 * @param column
 	 * @return
 	 */
 	public static SortAttr buildDesc(String column) {
 		return new SortAttr(column, true);
 	}
+
 	/**
 	 * 默认排序
+	 * 
 	 * @param column
 	 * @return
 	 */
 	public static SortAttr build(String column) {
 		return new SortAttr(column, null);
 	}
-	
-	public String toSql(){
-		StringBuilder sb= new StringBuilder().append(columnName);
-		if(desc!=null){
-			sb.append("  ").append(desc?"DESC":"ASC");
+
+	public String toSql() {
+		StringBuilder sb = new StringBuilder().append(columnName);
+		if (desc != null) {
+			sb.append("  ").append(desc ? "DESC" : "ASC");
 		}
 		return sb.toString();
 	}
+
 	@Override
-	public String toString(){
+	public String toString() {
 		return toSql();
+	}
+
+	public String getColumn() {
+		return columnName;
+	}
+
+	public boolean isDesc() {
+		return desc;
 	}
 }

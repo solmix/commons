@@ -20,8 +20,11 @@ package org.solmix.runtime.support.blueprint;
 
 import org.apache.aries.blueprint.ParserContext;
 import org.apache.aries.blueprint.mutable.MutableBeanMetadata;
+import org.apache.aries.blueprint.mutable.MutableCollectionMetadata;
+import org.osgi.service.blueprint.reflect.CollectionMetadata;
 import org.osgi.service.blueprint.reflect.ComponentMetadata;
 import org.osgi.service.blueprint.reflect.Metadata;
+import org.solmix.commons.util.DOMUtils;
 import org.solmix.commons.util.DataUtils;
 import org.solmix.commons.util.StringUtils;
 import org.solmix.runtime.extension.ContainerReference;
@@ -72,6 +75,48 @@ public class ContainerDefinitionParser extends AbstractBPBeanDefinitionParser
         return false;
     }
     @Override
+    protected void parseChildElements(Element element, ParserContext ctx, MutableBeanMetadata bean) {
+        Element el = DOMUtils.getFirstElement(element);
+        MutableCollectionMetadata coll=(MutableCollectionMetadata)ctx.createMetadata(CollectionMetadata.class);
+        while (el != null) {
+            String name = el.getLocalName();
+   			if("ref".equals(name)) {
+   				MutableBeanMetadata meta = parseRef(ctx, bean, el, name);
+   				coll.addValue(meta);
+   			}else {
+   				parseElement(ctx, bean, el, name);
+   			}
+            el = DOMUtils.getNextElement(el);
+        }
+        if(coll.getValues().size()>0) {
+   			bean.addProperty("references", coll);
+   		}
+    }
+    
+   
+    protected MutableBeanMetadata parseRef(ParserContext ctx, MutableBeanMetadata bean, Element el, String name) {
+    	MutableBeanMetadata meta = ctx.createMetadata(MutableBeanMetadata.class);
+    	NamedNodeMap atts = el.getAttributes();
+		for (int i = 0; i < atts.getLength(); i++) {
+			Attr node = (Attr) atts.item(i);
+			String val = node.getValue();
+			String attrName = node.getLocalName();
+			String prefix = node.getPrefix();
+			if (isNamespace(name, prefix)) {
+				continue;
+			}
+			 String propertyName=attrName;
+			 if ("container-id".equals(attrName)) {
+				 propertyName="id";
+			} 
+			 if (val != null && val.trim().length() > 0) {
+				 meta.addProperty(propertyName, createValue(ctx, val));
+		       }
+		}
+        meta.setRuntimeClass(ContainerReference.class);
+        return meta;
+    }
+    @Override
     protected void parseElement(ParserContext ctx, MutableBeanMetadata bean, Element el, String name) {
     
         if ("properties".equals(name)) {
@@ -80,27 +125,6 @@ public class ContainerDefinitionParser extends AbstractBPBeanDefinitionParser
             bean.addProperty("containerListeners", parseListData(ctx, bean, el));
         } else if ("bindings".equals(name)) {
             bean.addProperty("extensionBindings", parseListData(ctx, bean, el));
-        }else if ("ref".equals(name)) {
-        	MutableBeanMetadata meta = ctx.createMetadata(MutableBeanMetadata.class);
-        	NamedNodeMap atts = el.getAttributes();
-    		for (int i = 0; i < atts.getLength(); i++) {
-    			Attr node = (Attr) atts.item(i);
-    			String val = node.getValue();
-    			String attrName = node.getLocalName();
-    			String prefix = node.getPrefix();
-    			if (isNamespace(name, prefix)) {
-    				continue;
-    			}
-    			 String propertyName=attrName;
-    			 if ("container-id".equals(attrName)) {
-    				 propertyName="id";
-    			} 
-    			 if (val != null && val.trim().length() > 0) {
-    				 meta.addProperty(propertyName, createValue(ctx, val));
-    		       }
-    		}
-            meta.setRuntimeClass(ContainerReference.class);
-            bean.addProperty("reference",  meta);
         }else if ("tx".equals(name)) {
         	MutableBeanMetadata rule = createProxyMetadata(ctx,bean,el);
         	String managerId = el.getAttribute("manager");
