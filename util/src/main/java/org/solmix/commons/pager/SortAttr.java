@@ -37,8 +37,8 @@ public class SortAttr {
 	 * @param column
 	 * @return
 	 */
-	public static SortAttr build(String column) {
-		return new SortAttr(column, null);
+	public static SortAttr build(String column,Boolean desc) {
+		return new SortAttr(column, desc);
 	}
 
 	public String toSql() {

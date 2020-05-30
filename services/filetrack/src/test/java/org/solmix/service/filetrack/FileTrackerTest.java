@@ -3,7 +3,9 @@ package org.solmix.service.filetrack;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.io.IOUtils;
@@ -76,6 +78,50 @@ public class FileTrackerTest {
 		} finally {
 			IOUtils.closeQuietly(writer);
 		}
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	@Test
+	public void testTomcat() throws IOException, InterruptedException {
+		
+		List<TrackerInfo> trackers = new ArrayList<>();
+		String base = TestUtils.basedir().getAbsolutePath();
+		String cfile=base+File.separator+TEST_FILE;
+		FileUtils.createNewFile(cfile, "#file content");
+		
+		TrackerInfo i1 = new TrackerInfo();
+		//监控的是目录，而不是文件
+		i1.setPath(base);
+		i1.setFilter(".*\\.txt");
+		final CountDownLatch latch = new CountDownLatch(1);
+		tracker.addTrackedDirs(gitBase, Collections.singletonList(i1), new ChangeListener() {
+			
+			@Override
+			public void onChange(ChangeEvent event) {
+				latch.countDown();
+				LOG.debug(event.getDiff());
+			}
+		});
+		TrackerInfo i = new TrackerInfo();
+		//监控的是目录，而不是文件
+		i.setPath("conf");
+		i.setFilter(".*\\.properties|.*\\.xml|.*.policy|.*\\.cfg|.*\\.cnf|.*\\.conf");
+		i.setRecursive(true);
+		trackers.add(i);
+		tracker.addTrackedDirs("/Users/solmix/t/apache-tomcat-8.5.33", trackers, new ChangeListener() {
+			
+			@Override
+			public void onChange(ChangeEvent event) {
+				latch.countDown();
+				LOG.debug(event.getDiff());
+			}
+		});
+		
 		try {
 			latch.await();
 		} catch (InterruptedException e) {

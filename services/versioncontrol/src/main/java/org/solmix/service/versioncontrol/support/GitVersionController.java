@@ -479,7 +479,7 @@ public class GitVersionController implements VersionController
 		long fileSize = file.length();
 		PairLong info = fileInfoMap.get(path);
 		if (info != null && ObjectUtils.isEquals(info.getKey(),lastModified) &&  ObjectUtils.isEquals(info.getValue(),fileSize) && file.exists()){
-			LOG.info("Date and size unchanged, skipping - "+path);
+			LOG.debug("Date and size unchanged, skipping - "+path);
 			return false;
 		}
 		fileInfoMap.put(path, new PairLong(lastModified, fileSize));

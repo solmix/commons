@@ -70,20 +70,22 @@ public class PageControl implements Serializable, Cloneable {
 		}else{
 			newpc= new PageControl(pg);
 		}
-		newpc.addSort(column);
+		newpc.addSort(column,null);
 		return newpc;
 	}
-
-	public void addSort(String column) {
+	public void setSort(SortAttr sort) {
+		sortAttributes= new SortAttr[]{sort};
+	}
+	public void addSort(String column,Boolean isDesc) {
 		if(sortAttributes==null){
-			sortAttributes= new SortAttr[]{SortAttr.build(column)};
+			sortAttributes= new SortAttr[]{SortAttr.build(column,isDesc)};
 		}else{
 			int oldLength=sortAttributes.length;
 			SortAttr[] newsort= new SortAttr[oldLength+1];
 			for(int i=0;i<sortAttributes.length;i++){
 				newsort[i]=sortAttributes[i];
 			}
-			newsort[oldLength]=SortAttr.build(column);
+			newsort[oldLength]=SortAttr.build(column,isDesc);
 			sortAttributes=newsort;
 		}
 		

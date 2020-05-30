@@ -35,7 +35,9 @@ public class ExtensionRegistry {
 
     private static ConcurrentMap<String, ExtensionInfo> extensions = new ConcurrentHashMap<String, ExtensionInfo>(
         16, 0.75f, 4);
-
+    static Map<String, ExtensionInfo>  extensions(){
+    	return extensions;
+    }
     public static Map<String, ExtensionInfo> getRegisteredExtensions() {
         Map<String, ExtensionInfo> exts = new HashMap<String, ExtensionInfo>(
             extensions.size());
