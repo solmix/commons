@@ -116,7 +116,7 @@
 		<commons-jxpath.version>1.3</commons-jxpath.version>
 		<commons-fileupload.version>1.3.1</commons-fileupload.version>
 		<commons-pool2.version>2.4.2</commons-pool2.version>
-		<commons-collections.version>3.2.1</commons-collections.version>
+		<commons-collections.version>3.2.2</commons-collections.version>
 		<commons-logging.version>1.1.1</commons-logging.version>
 		<!-- <commons-io.version>2.4</commons-io.version>fileupload used 2.2 -->
 		<commons-io.version>2.2</commons-io.version>
