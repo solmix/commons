@@ -33,7 +33,6 @@ import org.solmix.exchange.model.ArgumentInfo;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 /**
  * 
@@ -45,13 +44,9 @@ public class ObjectReaderImpl<T> implements ObjectReader<T>
 {
 
     private ObjectMapper objectMapper;
-    
-    private XmlMapper xmlMapper;
-
     public ObjectReaderImpl(JacksonDataProcessor processor)
     {
         this.objectMapper = processor.getObjectMapper();
-        this.xmlMapper= processor.getXmlMapper();
     }
 
     @Override
@@ -68,27 +63,7 @@ public class ObjectReaderImpl<T> implements ObjectReader<T>
     public Object read(T input, ArgumentInfo ai) {
         Object content_type=ai.getProperty(Message.CONTENT_TYPE);
         if(content_type!=null&&content_type.equals("xml")){
-            try {
-                if(input instanceof InputStream){
-                    return  xmlMapper.readValue((InputStream)input, ai.getTypeClass());
-                 }else if(input instanceof Reader){
-                     return xmlMapper.readValue((Reader)input, ai.getTypeClass());
-                 }else if(input instanceof String){
-                     return xmlMapper.readValue((String)input, ai.getTypeClass());
-                 }else if(input instanceof URL){
-                     return xmlMapper.readValue((URL)input, ai.getTypeClass());
-                 }else if(input instanceof File){
-                     return xmlMapper.readValue((File)input, ai.getTypeClass());
-                 }else{
-                     throw new DataProcessorException("Unkonw source:"+input.getClass().getName());
-                 }
-            } catch (JsonParseException e) {
-                throw new DataProcessorException("Json parse exception",e);
-            } catch (JsonMappingException e) {
-                throw new DataProcessorException("Json mapping exception",e);
-            } catch (IOException e) {
-                throw new DataProcessorException("Json Mapper io exception",e);
-            }
+        	throw new DataProcessorException("not support xml");
         }else{
             try {
                 if(input instanceof InputStream){

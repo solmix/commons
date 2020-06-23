@@ -599,6 +599,19 @@ public class ExtensionContainer implements Container {
             }
         }
     }
+    /** load extension bindings dynamic (after initialize())*/
+    public void addExtensionBinding(ExtensionBinding binding) {
+    	Set<ExtensionInfo> infos=binding.getExtensionInfos();
+		if(infos!=null&&infos.size()>0){
+			for(ExtensionInfo info:infos) {
+				extensionManager.addLocalExtensionInfo(info);
+				 if (!info.isDeferred() && info.getLoadedObject() == null) {
+					 extensionManager.loadAndRegister(info);
+		            }
+			}
+				
+		}
+    }
 
     @Override
     public boolean isProduction() {

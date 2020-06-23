@@ -32,7 +32,6 @@ import org.solmix.exchange.model.ArgumentInfo;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 /**
  * 
@@ -45,12 +44,9 @@ public class ObjectWriterImpl<T> implements ObjectWriter<T>
 
     private ObjectMapper objectMapper;
 
-    private XmlMapper xmlMapper;
-
     public ObjectWriterImpl(JacksonDataProcessor processor)
     {
         this.objectMapper = processor.getObjectMapper();
-        this.xmlMapper = processor.getXmlMapper();
     }
 
     @Override
@@ -67,23 +63,7 @@ public class ObjectWriterImpl<T> implements ObjectWriter<T>
     public void write(Object obj, ArgumentInfo ai, T output) {
         Object content_type= ai.getProperty(Message.CONTENT_TYPE);
         if(content_type!=null&&content_type.equals("xml")){
-            try {
-                if(output instanceof OutputStream){
-                     xmlMapper.writeValue((OutputStream)output,obj);
-                 }else if(output instanceof Writer){
-                     xmlMapper.writeValue((Writer)output,obj);
-                 }else if(output instanceof File){
-                     xmlMapper.writeValue(( File)output,obj);
-                 }else{
-                     throw new DataProcessorException("Unkonw  output:"+output.getClass().getName());
-                 }
-            } catch (JsonParseException e) {
-                throw new DataProcessorException("Json parse exception",e);
-            } catch (JsonMappingException e) {
-                throw new DataProcessorException("Json mapping exception",e);
-            } catch (IOException e) {
-                throw new DataProcessorException("Json Mapper io exception",e);
-            }
+        	throw new DataProcessorException("not support xml");
         }else{
             try {
                 if(output instanceof OutputStream){

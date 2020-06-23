@@ -42,6 +42,7 @@ public interface ResourceManager
     InputStreamResource[] getResourcesAsStream(String location)throws IOException;
 
     void addResourceResolver(ResourceResolver resolver);
+    void addLastResourceResolver(ResourceResolver resolver);
 
     void removeResourceResolver(ResourceResolver resolver);
 

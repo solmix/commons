@@ -115,7 +115,11 @@ public class ResourceManagerImpl implements ResourceManager {
             registeredResolvers.add(0, resolver);
         }
     }
-
+    public void addLastResourceResolver(ResourceResolver resolver) {
+    	if (!registeredResolvers.contains(resolver)) {
+            registeredResolvers.add( resolver);
+        }
+    }
     /**
      * {@inheritDoc}
      * 

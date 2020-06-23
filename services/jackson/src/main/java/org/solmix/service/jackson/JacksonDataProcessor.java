@@ -37,8 +37,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 
 /**
@@ -50,13 +48,11 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 public class JacksonDataProcessor implements DataProcessor
 {
     private ObjectMapper objectMapper;
-    private XmlMapper xmlMapper;
     private boolean omitNullValues = true;
     public boolean prettyPrint ;
     List<JsonSerializer> jsonSerializers;
     
     private SimpleModule jsonModule;
-    private JacksonXmlModule xmlModule;
     /**
      * {@inheritDoc}
      * 
@@ -65,28 +61,8 @@ public class JacksonDataProcessor implements DataProcessor
     @Override
     public void initialize(Service service) {
         initializeObjectMapper();
-        initializeXmlMapper();
     }
 
-    private void initializeXmlMapper() {
-        xmlMapper= new XmlMapper();
-        if(prettyPrint){
-            xmlMapper.writerWithDefaultPrettyPrinter();
-        }
-        if(xmlModule==null){
-            xmlModule = new JacksonXmlModule();
-        }
-        if(jsonSerializers!=null){
-            for(JsonSerializer<?> serializer:jsonSerializers){
-                xmlModule.addSerializer(serializer);
-            }
-        }
-        xmlMapper.registerModule(xmlModule);
-        xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        xmlMapper.enable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-        xmlMapper.disable(SerializationFeature.WRITE_NULL_MAP_VALUES);
-        xmlMapper.enable(Feature.AUTO_CLOSE_TARGET);
-    }
 
     
     private void initializeObjectMapper() {
@@ -163,13 +139,7 @@ public class JacksonDataProcessor implements DataProcessor
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * @return
-     */
-    public XmlMapper getXmlMapper() {
-        return xmlMapper;
-    }
-   
+  
     public boolean isOmitNullValues() {
         return omitNullValues;
     }
@@ -204,16 +174,6 @@ public class JacksonDataProcessor implements DataProcessor
     
     public void setJsonModule(SimpleModule jsonModule) {
         this.jsonModule = jsonModule;
-    }
-
-    
-    public JacksonXmlModule getXmlModule() {
-        return xmlModule;
-    }
-
-    
-    public void setXmlModule(JacksonXmlModule xmlModule) {
-        this.xmlModule = xmlModule;
     }
 
 
