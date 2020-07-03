@@ -30,115 +30,137 @@ import java.util.Enumeration;
 
 import org.osgi.framework.Bundle;
 
-
 /**
  * 
  * @author solmix.f@gmail.com
- * @version $Id$  2013-11-5
+ * @version $Id$ 2013-11-5
  */
 
-public class BundleDelegatingClassLoader extends ClassLoader
-{
-    private final Bundle bundle;
-    private final ClassLoader classLoader;
+public class BundleDelegatingClassLoader extends ClassLoader {
+	private final Bundle bundle;
+	private final ClassLoader classLoader;
 
-    public BundleDelegatingClassLoader(Bundle bundle) {
-        this(bundle, null);
-    }
+	public BundleDelegatingClassLoader(Bundle bundle) {
+		this(bundle, null);
+	}
 
-    public BundleDelegatingClassLoader(Bundle bundle, ClassLoader classLoader) {
-        this.bundle = bundle;
-        this.classLoader = classLoader;
-    }
+	public BundleDelegatingClassLoader(Bundle bundle, ClassLoader classLoader) {
+		this.bundle = bundle;
+		this.classLoader = classLoader;
+	}
 
-    @Override
-    protected Class<?> findClass(final String name) throws ClassNotFoundException {
-        try {
-            return AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
-                @Override
-                public Class<?> run() throws ClassNotFoundException {
-                    return bundle.loadClass(name);
-                }
-            });
-        } catch (PrivilegedActionException e) {
-            Exception cause = e.getException();
-          
-            if (cause instanceof ClassNotFoundException) {
-                throw (ClassNotFoundException)cause;
-            } else {
-                throw (RuntimeException)cause;
-            }
-        }    
-    }
+	@Override
+	protected Class<?> findClass(final String name) throws ClassNotFoundException {
+		try {
+			return AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
+				@Override
+				public Class<?> run() throws ClassNotFoundException {
+					return bundle.loadClass(name);
+				}
+			});
+		} catch (PrivilegedActionException e) {
+			Exception cause = e.getException();
 
-    @Override
-    protected URL findResource(final String name) {
-        URL resource = AccessController.doPrivileged(new PrivilegedAction<URL>() {
-            @Override
-            public URL run() {
-                return bundle.getResource(name);
-            }
-        });        
-        if (classLoader != null && resource == null) {
-            resource = classLoader.getResource(name);
-        }
-        return resource;
-    }
+			if (cause instanceof ClassNotFoundException) {
+				throw (ClassNotFoundException) cause;
+			} else {
+				throw (RuntimeException) cause;
+			}
+		}
+	}
 
-    @Override
-    protected Enumeration<URL> findResources(final String name) throws IOException {
-        Enumeration<URL> urls;
-        try {
-            urls =  AccessController.doPrivileged(new PrivilegedExceptionAction<Enumeration<URL>>() {
-                @Override
-                public Enumeration<URL> run() throws IOException {
-                    return bundle.getResources(name);
-                }
-          
-            });
-        } catch (PrivilegedActionException e) {
-            Exception cause = e.getException();
-        
-            if (cause instanceof IOException) {
-                throw (IOException)cause;
-            } else {
-                throw (RuntimeException)cause;
-            }
-        }
-      
-        if (urls == null) {
-            urls = Collections.enumeration(new ArrayList<URL>());
-        }
-      
-        return urls;    
-    }
+	@Override
+	protected URL findResource(final String name) {
+		ClassLoader cl = Thread.currentThread().getContextClassLoader();
+		URL resource = null;
+		if (cl != null && this != cl) {
+			resource = cl.getResource(name);
+		}
+		if (resource == null) {
+			resource = AccessController.doPrivileged(new PrivilegedAction<URL>() {
+				@Override
+				public URL run() {
+					return bundle.getResource(name);
+				}
+			});
+		}
+		if (classLoader != null && resource == null) {
+			resource = classLoader.getResource(name);
+		}
+		return resource;
+	}
 
-    @Override
-    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        Class<?> clazz;
-        try {
-            clazz = findClass(name);
-        } catch (ClassNotFoundException cnfe) {
-            if (classLoader != null) {
-                try {
-                    clazz = classLoader.loadClass(name);
-                } catch (ClassNotFoundException e) {
-                    throw new ClassNotFoundException(name + " from bundle " + bundle.getBundleId() 
-                                                     + " (" + bundle.getSymbolicName() + ")", cnfe);
-                }
-            } else {
-                throw new ClassNotFoundException(name + " from bundle " + bundle.getBundleId() 
-                                                 + " (" + bundle.getSymbolicName() + ")", cnfe);
-            }
-        }
-        if (resolve) {
-            resolveClass(clazz);
-        }
-        return clazz;
-    }
+	@Override
+	protected Enumeration<URL> findResources(final String name) throws IOException {
+		Enumeration<URL> urls = null;
+		ClassLoader cl = Thread.currentThread().getContextClassLoader();
+		if (cl != null && this != cl) {
+			urls = cl.getResources(name);
+		}
+		if (urls == null) {
+			try {
+				urls = AccessController.doPrivileged(new PrivilegedExceptionAction<Enumeration<URL>>() {
+					@Override
+					public Enumeration<URL> run() throws IOException {
+						return bundle.getResources(name);
+					}
 
-    public Bundle getBundle() {
-        return bundle;
-    }
+				});
+			} catch (PrivilegedActionException e) {
+				Exception cause = e.getException();
+
+				if (cause instanceof IOException) {
+					throw (IOException) cause;
+				} else {
+					throw (RuntimeException) cause;
+				}
+			}
+		}
+
+		if (urls == null) {
+			urls = Collections.enumeration(new ArrayList<URL>());
+		}
+
+		return urls;
+	}
+
+	@Override
+	protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+		Class<?> clazz = null;
+		boolean delegate = false;
+		try {
+			ClassLoader cl = Thread.currentThread().getContextClassLoader();
+
+			if (cl != null && this != cl) {
+				clazz = cl.loadClass(name);
+			} else {
+				delegate = true;
+				clazz = findClass(name);
+			}
+
+		} catch (ClassNotFoundException cnfe) {
+			try {
+				if (!delegate) {
+					clazz = findClass(name);
+				}
+			} catch (ClassNotFoundException cf) {
+				if (classLoader != null && clazz == null) {
+					clazz = classLoader.loadClass(name);
+				}
+			}
+
+		}
+		if (clazz == null) {
+			throw new ClassNotFoundException(name);
+		}
+		if (resolve) {
+			resolveClass(clazz);
+		}
+		return clazz;
+	}
+
+	public Bundle getBundle() {
+		return bundle;
+	}
 
 }
