@@ -1,7 +1,7 @@
 
 package org.solmix.commons.timer;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,7 @@ public class StopWatch {
 
     public StopWatch(long start) {
         this.start = start;
-        markerMap = new HashMap<String, LinkedList<TimeSlice>>();
+        markerMap = new LinkedHashMap<String, LinkedList<TimeSlice>>();
     }
 
     public long reset() {
@@ -46,7 +46,7 @@ public class StopWatch {
             return this.getElapsed();
         } finally {
             start = now();
-            markerMap = new HashMap<String, LinkedList<TimeSlice>>();
+            markerMap = new LinkedHashMap<String, LinkedList<TimeSlice>>();
         }
     }
     

@@ -91,9 +91,7 @@ public class EventServiceMBean implements ManagedComponent
         String id = service.getContainer().getId();
         StringBuilder buffer = new StringBuilder(ManagementConstants.DEFAULT_DOMAIN_NAME).append(':');
         buffer.append(ManagementConstants.TYPE_PROP).append('=').append(TYPE_VALUE).append(',');
-        buffer.append(ManagementConstants.CONTAINER_ID_PROP).append('=').append(id).append(',');
-        String instanceId  = new StringBuilder().append(service.hashCode()).toString();
-        buffer.append(ManagementConstants.INSTANCE_ID_PROP).append('=').append(instanceId);
+        buffer.append(ManagementConstants.CONTAINER_ID_PROP).append('=').append(id);
         return new ObjectName(buffer.toString());
     }
 

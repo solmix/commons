@@ -97,7 +97,7 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 		if (cl != null && this != cl) {
 			urls = cl.getResources(name);
 		}
-		if (urls == null) {
+		if (urls == null || !urls.hasMoreElements()) {
 			try {
 				urls = AccessController.doPrivileged(new PrivilegedExceptionAction<Enumeration<URL>>() {
 					@Override
@@ -117,7 +117,7 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 			}
 		}
 
-		if (urls == null) {
+		if (urls == null || !urls.hasMoreElements()) {
 			urls = Collections.enumeration(new ArrayList<URL>());
 		}
 

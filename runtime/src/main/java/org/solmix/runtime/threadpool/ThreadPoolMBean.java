@@ -95,8 +95,7 @@ public class ThreadPoolMBean implements ManagedComponent
         } else {
             buffer.append(ManagementConstants.CONTAINER_ID_PROP).append("=Shared,");
         }
-        buffer.append(ManagementConstants.NAME_PROP).append('=').append(pool.getName()).append(',');
-        buffer.append(ManagementConstants.INSTANCE_ID_PROP).append('=').append(pool.hashCode());
+        buffer.append(ManagementConstants.NAME_PROP).append('=').append(pool.getName());
         return new ObjectName(buffer.toString());
     }
 

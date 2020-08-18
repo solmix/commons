@@ -41,8 +41,7 @@ public class ThreadPoolManagerMBean implements ManagedComponent
         buffer.append(ManagementConstants.DEFAULT_DOMAIN_NAME).append(':');
         buffer.append(ManagementConstants.TYPE_PROP)        .append('=').append(TYPE_VALUE)           .append(',');
         buffer.append(ManagementConstants.CONTAINER_ID_PROP).append('=').append(container.getId())    .append(',');
-        buffer.append(ManagementConstants.NAME_PROP)        .append('=').append(NAME_VALUE)           .append(',');
-        buffer.append(ManagementConstants.INSTANCE_ID_PROP) .append('=').append(manager.hashCode());
+        buffer.append(ManagementConstants.NAME_PROP)        .append('=').append(NAME_VALUE)           ;
         return new ObjectName(buffer.toString());
     }
 }
