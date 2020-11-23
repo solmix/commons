@@ -49,11 +49,12 @@ public class RSAUtilsTest extends Assert
     @Test
     public void generationKey()throws Exception{
 //        privateKey="";
-        String source = "sdfeses";
+        String source = "2015-01-01~2030-01-01";
         System.out.println("原文字：\r\n" + source);
         byte[] data = source.getBytes();
         byte[] encodedData = RSAUtils.encryptByPrivateKey(data, privateKey);
         System.out.println("加密后：\r\n" + Base64Utils.encode(encodedData));
+        System.out.println("解密后：\r\n" + new String(RSAUtils.decryptByPublicKey(encodedData, publicKey)));
     }
    
     @Test

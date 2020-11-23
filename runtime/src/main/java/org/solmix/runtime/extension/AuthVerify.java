@@ -76,5 +76,10 @@ public class AuthVerify
             return false;
         }
     }
+    
+    public static void main(String[] args) {
+    	AuthVerify v = new AuthVerify("2015-01-01~2030-01-01");
+    	System.out.println(v.verify());
+    }
 
 }
