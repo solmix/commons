@@ -119,7 +119,7 @@
 		<commons-collections.version>3.2.1</commons-collections.version>
 		<commons-logging.version>1.1.1</commons-logging.version>
 		<!-- <commons-io.version>2.4</commons-io.version>fileupload used 2.2 -->
-		<commons-io.version>2.2</commons-io.version>
+		<commons-io.version>2.7</commons-io.version>
 		<commons-beanutils.version>1.9.2</commons-beanutils.version>
 		<commons-dbcp.version>1.4</commons-dbcp.version>
 		<commons-codec.version>1.11</commons-codec.version>
